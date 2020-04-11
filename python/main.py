@@ -11,6 +11,8 @@ import json
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs/'))
 import dithering
 
+# Debugging.
+
 # from python-lua-dithering.libs import dithering
 # import libs.dithering
 # from libs.dithering import *
