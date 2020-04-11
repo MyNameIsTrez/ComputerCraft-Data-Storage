@@ -368,29 +368,6 @@ def print_stats(used_frame_count, frame_count, start_frame_time, get_frame_time,
 	# print(tab + progress + speed + speed_2 + speed_3 + speed_4 + speed_5 + eta, end='\r', flush=True)
 
 
-def create_structure():
-	string = ''
-
-	string += '{'
-
-	animationsPath = os.path.join(currentPath, 'animations/')
-	sizes = os.listdir()
-	for size in sizes:
-		string += '\n    ' + size + ' = {'
-
-		names = os.listdir(os.path.join(animationsPath, size))
-		for name in names:
-			string += '\n        \'' + name + '\','
-
-		string += '\n    },'
-
-	string += '\n}'
-
-	with open(os.path.join(currentPath, 'structure.txt'), 'w') as f:
-		f.write(string)
-		f.close() # Necessary?
-
-
 # Function I stole from StackOverflow:
 # https://stackoverflow.com/a/35844551
 def download_files():
@@ -481,8 +458,6 @@ for dimension in output_dimensions:
 for name in os.listdir(tempDownloadsPath):
 	if name != '.empty':
 		os.remove(os.path.join(tempDownloadsPath, name))
-
-create_structure()
 
 # print the time it took to run the program
 time_elapsed = time.time() - t0

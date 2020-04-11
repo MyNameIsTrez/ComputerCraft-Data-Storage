@@ -1,5 +1,0 @@
-{
-    size_30x30 = {
-        'wavetro_logo',
-    },
-}
