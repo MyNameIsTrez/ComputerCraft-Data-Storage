@@ -8,7 +8,7 @@ import requests # Used for downloading any file type.
 import json
 
 # Temporary way to access the dithering lib. Refactor later.
-sys.path.append('python/libs/')
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs/'))
 import dithering
 
 # from python-lua-dithering.libs import dithering
