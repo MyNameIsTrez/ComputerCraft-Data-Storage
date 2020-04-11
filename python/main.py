@@ -8,7 +8,8 @@ import requests # Used for downloading any file type.
 import json
 
 # Temporary way to access the dithering lib. Refactor later.
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'libs/'))
+currentPath = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(currentPath, 'libs/'))
 import dithering
 
 # Debugging.
@@ -25,7 +26,8 @@ def process_frames(full_file_name, max_width, max_height, frame_skipping):
 	extension = full_file_name.split('.')[1]  # get the extension after the '.'
 	# get the name before the '.', and optionally add '_extended'
 	file_name = full_file_name.split('.')[0] + (' extended' if extended_chars else '')
-	input_path = 'temp downloads/' + full_file_name
+	input_path = os.path.join(currentPath, 'temp downloads/' , full_file_name)
+
 	output_file_name = file_name.replace(' ', '_')
 
 	print('Processing \'' + file_name + '\'')
@@ -40,18 +42,19 @@ def process_frames(full_file_name, max_width, max_height, frame_skipping):
 	new_height = max_height
 	new_width = get_new_width(extension, video, old_image, input_path, new_height, max_width)
 
-	if not os.path.exists('animations'):
-		os.mkdir('animations')
+	animationsPath = os.path.join(currentPath, 'animations/')
+	if not os.path.exists(animationsPath):
+		os.mkdir(animationsPath)
 
-	output_folder_size_name = 'animations/' + 'size_' + str(new_width) + 'x' + str(new_height)
+	output_folder_size_name = os.path.join(animationsPath, 'size_' + str(new_width) + 'x' + str(new_height))
 	if not os.path.exists(output_folder_size_name):
 		os.mkdir(output_folder_size_name)
 
-	output_folder_name = output_folder_size_name + '/' + output_file_name
+	output_folder_name = os.path.join( output_folder_size_name , output_file_name)
 	if not os.path.exists(output_folder_name):
 		os.mkdir(output_folder_name)
 
-	output_data_folder_name = output_folder_name + '/data'
+	output_data_folder_name = os.path.join(output_folder_name , 'data/')
 	if not os.path.exists(output_data_folder_name):
 		os.mkdir(output_data_folder_name)
 
@@ -109,7 +112,7 @@ def try_create_new_output_file(line_num, file_byte_count, output_file, output_da
 		data_frames_count += 1
 
 		line_num = 1
-	
+
 	return line_num, file_byte_count, output_file, data_frames_count
 
 
@@ -135,7 +138,7 @@ def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width
 				used_frame_count += 1
 
 				line_num, file_byte_count, output_file, data_frames_count = try_create_new_output_file(line_num, file_byte_count, output_file, output_data_folder_name, data_frames_count)
-				
+
 				# cv2_frame = cv2.cvtColor(cv2_frame, cv2.COLOR_BGR2RGB)
 
 				cv2_frame = cv2.resize(cv2_frame, (new_width - 1, new_height))
@@ -170,7 +173,7 @@ def process_gif_frames(output_data_folder_name, old_image, new_width, new_height
 				used_frame_count += 1
 
 				line_num, file_byte_count, output_file, data_frames_count = try_create_new_output_file(line_num, file_byte_count, output_file, output_data_folder_name, data_frames_count)
-				
+
 				new_image = old_image.resize((new_width - 1, new_height), Image.ANTIALIAS)
 
 				get_frame_time = time.time() - start_frame_time
@@ -198,7 +201,7 @@ def process_image_frame(output_data_folder_name, old_image, new_width, new_heigh
 	# new_image = old_image.resize((new_width - 1, new_height), Image.NEAREST)
 	# new_image = old_image.resize((new_width - 1, new_height), Image.BILINEAR)
 	# new_image = old_image.resize((new_width - 1, new_height), Image.BICUBIC)
-	
+
 	# new_image = new_image.convert('RGB')
 
 	used_frame_count = 1
@@ -208,7 +211,7 @@ def process_image_frame(output_data_folder_name, old_image, new_width, new_heigh
 	process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, 1, start_frame_time, get_frame_time)
 
 	output_file.close()
-	
+
 	return used_frame_count, data_frames_count
 
 
@@ -270,8 +273,8 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 
 	if used_frame_count % frames_to_update_stats == 0 or used_frame_count == frame_count:
 		print_stats(used_frame_count, frame_count, start_frame_time, get_frame_time, preparing_loop_time, looping_time, writing_time)
-		
-		if used_frame_count == frame_count:	
+
+		if used_frame_count == frame_count:
 			print()
 
 	string_byte_count = len(final_string.encode('utf8'))
@@ -370,11 +373,12 @@ def create_structure():
 
 	string += '{'
 
-	sizes = os.listdir('animations')
+	animationsPath = os.path.join(currentPath, 'animations/')
+	sizes = os.listdir()
 	for size in sizes:
 		string += '\n    ' + size + ' = {'
 
-		names = os.listdir('animations/' + size)
+		names = os.listdir(os.path.join(animationsPath, size))
 		for name in names:
 			string += '\n        \'' + name + '\','
 
@@ -382,10 +386,7 @@ def create_structure():
 
 	string += '\n}'
 
-	if os.path.exists('structure.txt'):
-		os.remove('structure.txt')
-
-	with open('structure.txt', 'w') as f:
+	with open(os.path.join(currentPath, 'structure.txt'), 'w') as f:
 		f.write(string)
 		f.close() # Necessary?
 
@@ -393,14 +394,11 @@ def create_structure():
 # Function I stole from StackOverflow:
 # https://stackoverflow.com/a/35844551
 def download_files():
-	for file_info in files_info:
-		url = file_info[0]
-		name = file_info[1]
-		extension = file_info[2]
-		
-		r = requests.get(url, stream=True)
-		with open('temp downloads/' + name + '.' + extension, 'wb') as f:
-			for chunk in r.iter_content(chunk_size=1024): 
+	for file_info in files_info['data']:
+		r = requests.get(file_info['url'], stream=True)
+		fileName = os.path.join(currentPath, 'temp downloads/', file_info['name'] + '.' + file_info['extension'])
+		with open(fileName, 'wb') as f:
+			for chunk in r.iter_content(chunk_size=1024):
 				if chunk:
 					f.write(chunk)
 			f.close() # Necessary?
@@ -422,7 +420,7 @@ extended_chars = False
 # 4. when you want to go back to the default font,
 # 	 replace the new minecraft.jar file with 'minecraft.jar versions/old/minecraft.jar'
 
-# if true, the original aspect ratio won't be kept so the width can be stretched to max_width 
+# if true, the original aspect ratio won't be kept so the width can be stretched to max_width
 new_width_stretched = True
 
 # a file compression method
@@ -451,6 +449,7 @@ output_dimensions = (
 )
 
 string = sys.argv[1]
+print(string)
 files_info = json.loads(string)
 
 # files_info = [
@@ -471,16 +470,17 @@ t0 = time.time()
 
 download_files()
 
+tempDownloadsPath = os.path.join(currentPath,'temp downloads')
 for dimension in output_dimensions:
 	max_width, max_height = dimension
-	for name in os.listdir('temp downloads'):
+	for name in os.listdir(tempDownloadsPath):
 		if name != '.empty': # '.empty' prevents the folder from being removed on GitHub
 			process_frames(name, max_width, max_height, frame_skipping)
 	print()
 
-for name in os.listdir('temp downloads'):
+for name in os.listdir(tempDownloadsPath):
 	if name != '.empty':
-		os.remove('temp downloads/' + name)
+		os.remove(os.path.join(tempDownloadsPath, name))
 
 create_structure()
 
