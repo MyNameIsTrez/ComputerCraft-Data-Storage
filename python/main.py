@@ -411,29 +411,32 @@ max_bytes_per_file = 9.5e7
 frames_to_update_stats = 100
 
 
+string = sys.argv[1]
+print(string)
+files_info = json.loads(string)
+
+
 # this determines the width and height of the output frames
 # see tekkit/config/mod_ComputerCraft.cfg to set your own max_width and max_height values
 
 # (max_width, max_height)
-output_dimensions = (
+# output_dimensions = (
 	# (9, 8), # for single characters, this is 8x8 without the '\n' char at the end
-	(30, 30),
+	# (30, 30),
 	# (77, 31), # max 8x5 monitor size in ComputerCraft, used because 8x6 doesn't always work
 	# (77, 38), # max 8x6 monitor size in ComputerCraft
 	# (227, 85), # 1080p
 	# (426, 160), # 1440p
 	# (640, 240), # 4k
-)
-
-string = sys.argv[1]
-print(string)
-files_info = json.loads(string)
+# )
 
 # files_info = [
 # 	[
 # 		'http://uimg.ngfiles.com/icons/7349/7349981_large.png?f1578283262',
 # 		'wavetro logo',
-# 		'png'
+# 		'png',
+# 		'width' = '30',
+# 		'height' = '30'
 # 	],
 # ]
 
@@ -447,13 +450,23 @@ t0 = time.time()
 
 download_files()
 
-tempDownloadsPath = os.path.join(currentPath,'temp downloads')
-for dimension in output_dimensions:
-	max_width, max_height = dimension
-	for name in os.listdir(tempDownloadsPath):
-		if name != '.empty': # '.empty' prevents the folder from being removed on GitHub
-			process_frames(name, max_width, max_height, frame_skipping)
-	print()
+tempDownloadsPath = os.path.join(currentPath, 'temp downloads')
+
+# for dimension in output_dimensions:
+	# max_width, max_height = dimension
+	# for name in os.listdir(tempDownloadsPath):
+		# if name != '.empty': # '.empty' prevents the folder from being removed on GitHub
+	# print()
+
+for file_info in files_info['data']:
+	name = file_info['name']
+	extension = file_info['extension']
+	full_name = os.path.join(name + '.' + extension)
+
+	max_width = file_info['width']
+	max_height = file_info['height']
+
+	process_frames(full_name, max_width, max_height, frame_skipping)
 
 for name in os.listdir(tempDownloadsPath):
 	if name != '.empty':
