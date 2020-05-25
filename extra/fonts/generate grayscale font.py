@@ -1,9 +1,15 @@
+import os
 from PIL import Image
 
 char_size = 8 # all characters are 8x8 in default.png
 char_count = 95 # there are 95 characters in ComputerCraft, but note the 64th character ` can't be used later on!
 row_count = 6
 chars_in_row_max = 16
+
+grayscale_path = 'extra/fonts/grayscale'
+
+if not os.path.exists(grayscale_path):
+    os.makedirs(grayscale_path)
 
 def get_grayscale(char_val):
 	brightness = round(char_val * 255 / (char_count - 1))
@@ -23,4 +29,4 @@ for row in range(row_count):
 				y = by
 				char_pix[x, y] = get_grayscale(char_val + offset)
 
-	char_img.save('fonts/grayscale/row ' + str(row + 1) + '.png')
+	char_img.save(grayscale_path + '/row ' + str(row + 1) + '.png')

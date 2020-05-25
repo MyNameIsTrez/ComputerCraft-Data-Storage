@@ -1,10 +1,16 @@
+import os
 from PIL import Image
 
 char_size = 8 # all characters are 8x8 in chars.png (default.png)
 row_count = 16
 chars_in_row = 16
 
-chars_img = Image.open('chars split/chars.png')
+chars_path = 'extra/chars split/chars'
+
+if not os.path.exists(chars_path):
+    os.makedirs(chars_path)
+
+chars_img = Image.open('extra/chars.png')
 chars_pix = chars_img.load()
 
 for row in range(row_count):
@@ -22,4 +28,4 @@ for row in range(row_count):
 				y2 = y1 + y_offset
 				char_pix[x1, y1] = chars_pix[x2, y2]
 		
-		char_img.save('chars split/chars/char_' + str(col + row * chars_in_row) + '.png')
+		char_img.save(chars_path + '/char_' + str(col + row * chars_in_row) + '.png')
