@@ -20,13 +20,13 @@ def get_color(i):
 
 for row in range(row_count):
 	offset = row * chars_in_row_max
-	chars_in_row = chars_in_row_max if row < row_count - 1 else chars_in_row_max - 1
+	chars_in_row = chars_in_row_max if row < row_count - 1 else chars_in_row_max - 2
 	char_img_dimensions = (char_size * chars_in_row, char_size)
 	char_img = Image.new('RGB', char_img_dimensions, color = 'black')
 	char_pix = char_img.load()
 
 	for char_val in range(chars_in_row):
-		i = (row - 1) * chars_in_row_max + chars_in_row + char_val
+		i = row * chars_in_row_max + char_val
 		for bx in range (char_size):
 			for by in range (char_size):
 				x = char_val * char_size + bx
