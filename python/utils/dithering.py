@@ -10,6 +10,25 @@ from bisect import bisect_left
 # This file contains a table with characters in it from Minecraft 1.2.5's character set.
 # This is used by the Tekkit Classic modpack's ComputerCraft (1.33) character set.
 
+
+def get_brightness(tup):
+	# red, green and blue values aren't equally bright to the human eye
+	brightness = (0.2126 * tup[0] + 0.7152 * tup[1] + 0.0722 * tup[2]) / 255
+	if len(tup) == 4:
+		return brightness * tup[3] / 255
+	else:
+		return 0
+
+
+def get_char(pixel, extended_chars):
+	# the brightness of a pixel determines which character will be used in ComputerCraft for that pixel
+	brightness = get_brightness(pixel)
+	if not extended_chars:
+		return get_closest_char_default(brightness)
+	else:
+		return get_closest_char_extended(brightness)
+
+
 ## VANILLA FONT ####################
 
 # The ordering of this table was done with another python script that has since been deleted.
