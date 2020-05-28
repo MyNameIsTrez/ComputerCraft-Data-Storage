@@ -4,23 +4,19 @@ import time
 from math import floor
 import json
 
-# Temporary way to access the dithering lib. Refactor later.
-currentPath = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-
+# Utils
 import utils.processing as processing
+
+
+current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 
 # USER SETTINGS #######################################
 
 
-# default is False
-# if true, the program assumes 94 characters are available, instead of the usual 20
-# 94 are available by replacing Tekkit's default characters in default.png, see the instructions below
-extended_chars = False
-
 # how to get the extended character set (characters are replaced with grayscale blocks):
 # 1. go to %appdata%/.technic/modpacks/tekkit/bin
-# 2. remove the minecraft.jar file and replace it with 'minecraft.jar versions/new/minecraft.jar',
+# 2. remove the minecraft.jar file and replace it with "minecraft.jar versions/new/minecraft.jar",
 #    which can be found inside the same folder of this program
 # 3. tekkit's characters should now all be replaced with 94 grayscale colors, instead of the default 19
 # 4. when you want to go back to the default font,
@@ -37,7 +33,7 @@ frame_skipping = 1
 max_bytes_per_file = 9.5e7
 
 # how many frames have to be processed before the stats in the console are updated
-frames_to_update_stats = 100
+frames_to_update_stats = 10
 
 
 # string = sys.argv[1]
@@ -46,11 +42,11 @@ frames_to_update_stats = 100
 
 
 # this determines the width and height of the output frames
-# see tekkit/config/mod_ComputerCraft.cfg to set your own max_width and max_height values
+# see tekkit/config/mod_ComputerCraft.cfg to set custom max_width and max_height values
 
 # (max_width, max_height)
 # output_dimensions = (
-	# (9, 8), # for single characters, this is 8x8 without the '\n' char at the end
+	# (9, 8), # for single characters, this is 8x8 without the "\n" char at the end
 	# (30, 30),
 	# (77, 31), # max 8x5 monitor size in ComputerCraft, used because 8x6 doesn't always work
 	# (77, 38), # max 8x6 monitor size in ComputerCraft
@@ -60,28 +56,97 @@ frames_to_update_stats = 100
 # )
 
 files_info = {
-	'data': [
+	"data": [
 		# {
-		# 	'url': 'https://uploads.ungrounded.net/alternate/1443000/1443835_alternate_95750.720p.mp4',
-		# 	'name': 'takeout',
-		# 	'extension': 'mp4',
-		# 	'width': 30,
-		# 	'height': 30
+		# 	"url": "https://uploads.ungrounded.net/alternate/1443000/1443835_alternate_95750.720p.mp4",
+		# 	"name": "takeout",
+		# 	"extension": "mp4",
+		# 	"options": [
+		# 		{
+		# 			"char_type": "vanilla",
+		# 			"width": 10,
+		# 			"height": 10
+		# 		},
+		# 		{
+		# 			"char_type": "grayscale",
+		# 			"width": 10,
+		# 			"height": 10
+		# 		},
+		# 		{
+		# 			"char_type": "color",
+		# 			"width": 10,
+		# 			"height": 10
+		# 		}
+		# 	]
+		# },
+		# {
+		# 	"url": "http://uimg.ngfiles.com/icons/7349/7349981_large.png?f1578283262",
+		# 	"name": "wavetro logo",
+		# 	"extension": "png",
+		# 	"options": [
+		# 		# {
+		# 		# 	"char_type": "grayscale",
+		# 		# 	"width": 10,
+		# 		# 	"height": 10
+		# 		# },
+		# 		{
+		# 			"char_type": "color",
+		# 			"width": 20,
+		# 			"height": 20
+		# 		},
+		# 		{
+		# 			"char_type": "color",
+		# 			"width": 10,
+		# 			"height": 10
+		# 		}
+		# 	]
+		# },
+		# {
+		# 	"url": "https://mooncatrobot.com/wp-content/uploads/2017/09/emilydevogel_weirdparty.gif",
+		# 	"name": "grooving",
+		# 	"extension": "gif",
+		# 	"options": [
+		# 		{
+		# 			"char_type": "vanilla",
+		# 			"width": 10,
+		# 			"height": 10
+		# 		}
+		# 	]
+		# },
+		# {
+		# 	"url": "https://i.imgur.com/QIY6Pfg.jpg",
+		# 	"name": "eiffel",
+		# 	"extension": "jpg",
+		# 	"options": [
+		# 		{
+		# 			"char_type": "color",
+		# 			"width": 426,
+		# 			"height": 160
+		# 		}
+		# 	]
 		# },
 		{
-			'url': 'http://uimg.ngfiles.com/icons/7349/7349981_large.png?f1578283262',
-			'name': 'wavetro logo',
-			'extension': 'png',
-			'width': 30,
-			'height': 30
+			"url": "https://media.giphy.com/media/7GcdjWkek7Apq/giphy.gif",
+			"name": "coincidence",
+			"extension": "gif",
+			"options": [
+				{
+					"char_type": "vanilla",
+					"width": 426,
+					"height": 160
+				},
+				{
+					"char_type": "grayscale",
+					"width": 426,
+					"height": 160
+				},
+				{
+					"char_type": "color",
+					"width": 426,
+					"height": 160
+				}
+			]
 		},
-		# {
-		# 	'url': 'https://mooncatrobot.com/wp-content/uploads/2017/09/emilydevogel_weirdparty.gif',
-		# 	'name': 'grooving',
-		# 	'extension': 'gif',
-		# 	'width': 30,
-		# 	'height': 30
-		# }
 	],
 }
 
@@ -89,41 +154,37 @@ files_info = {
 # EXECUTION OF THE PROGRAM #######################################
 
 
-print()
-
 t0 = time.time()
 
-processing.download_files(files_info, currentPath)
+print()
 
-tempDownloadsPath = os.path.join(currentPath, 'temp downloads')
+processing.download_files(files_info, current_path)
 
-# for dimension in output_dimensions:
-	# max_width, max_height = dimension
-	# for name in os.listdir(tempDownloadsPath):
-		# if name != '.empty': # '.empty' prevents the folder from being removed on GitHub
-	# print()
+tempDownloadsPath = os.path.join(current_path, "temp downloads")
 
-for file_info in files_info['data']:
-	name = file_info['name']
-	extension = file_info['extension']
-	full_name = os.path.join(name + '.' + extension)
+print("Processing:")
 
-	max_width = file_info['width']
-	max_height = file_info['height']
-
-	processing.process_frames(full_name, max_width, max_height, frame_skipping, extended_chars, currentPath, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
+for file_info in files_info["data"]:
+	name = file_info["name"]
+	extension = file_info["extension"]
+	full_name = os.path.join(name + "." + extension)
+	for size in file_info["options"]:
+		char_type = size["char_type"]
+		max_width = size["width"]
+		max_height = size["height"]
+		processing.process_frames(name, full_name, max_width, max_height, frame_skipping, char_type, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
 
 for name in os.listdir(tempDownloadsPath):
-	if name != '.empty':
+	if name != ".empty":
 		os.remove(os.path.join(tempDownloadsPath, name))
 
-# print the time it took to run the program
+# Print the time it took to run the program.
 time_elapsed = time.time() - t0
 minutes = floor(time_elapsed / 60)
 seconds = time_elapsed % 60
 
-print('Done! Duration: {}m, {:.2f}s'.format(minutes, seconds))
+print("\n\nDone! Duration: {}m, {:.2f}s".format(minutes, seconds))
 
 # sys.stdout.write("\033[F") # Cursor up one line
 # sys.stdout.write("\033[K") # Clear to the end of line
-# print('Done! Duration: {}m, {:.2f}s'.format(minutes, seconds), end='\r', flush=True)
+# print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds), end="\r", flush=True)
