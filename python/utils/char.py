@@ -551,11 +551,11 @@ def get_color_from_palette(pixel):
 		clr = color_palette[i]
 		diff = (pixel[0] - clr[0]) ** 2 + (pixel[1] - clr[1]) ** 2 + (pixel[2] - clr[2]) ** 2
 		if diff < smallest_diff: # TODO: Figure out *why* this doesn't seem to speedup the program, even though ~37% of pixels goes here. 
-			return chars_extended[i], True
+			return chars_extended[i]
 		if diff < smallest_found_diff:
 			smallest_found_diff = diff
 			smallestDiffIndex = i
-	return chars_extended[smallestDiffIndex], False
+	return chars_extended[smallestDiffIndex]
 
 
 def take_closest(indices, my_number):

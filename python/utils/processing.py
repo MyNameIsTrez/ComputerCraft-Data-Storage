@@ -13,10 +13,13 @@ import utils.char as char
 # https://stackoverflow.com/a/35844551
 def download_files(files_info, current_path):
 	print("Downloading:")
+	pathTempDownloads = os.path.join(current_path, "temp downloads")
+	if not os.path.exists(pathTempDownloads):
+		os.mkdir(pathTempDownloads)
 	for file_info in files_info["data"]:
 		print("    '" + file_info["name"] + "'")
 		r = requests.get(file_info["url"], stream=True)
-		fileName = os.path.join(current_path, "temp downloads/", file_info["name"] + "." + file_info["extension"])
+		fileName = os.path.join(pathTempDownloads, file_info["name"] + "." + file_info["extension"])
 		with open(fileName, "wb") as f:
 			for chunk in r.iter_content(chunk_size=1024):
 				if chunk:
@@ -27,13 +30,8 @@ def download_files(files_info, current_path):
 
 def process_frames(name, full_file_name, max_width, max_height, frame_skipping, char_type, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
 	extension = full_file_name.split(".")[1]  # Get the extension after the ".".
-
-	if char_type == "grayscale":
-		name += " grayscale"
-	elif char_type == "color":
-		name += " color"
 	
-	input_path = os.path.join(current_path, "temp downloads/" , full_file_name)
+	input_path = os.path.join(current_path, "temp downloads" , full_file_name)
 
 	if extension == "mp4":
 		video = cv2.VideoCapture(input_path)
@@ -46,7 +44,7 @@ def process_frames(name, full_file_name, max_width, max_height, frame_skipping, 
 	new_width = get_new_width(extension, video, old_image, input_path, new_height, max_width, new_width_stretched)
 
 	# Create folder "animations".
-	animationsPath = os.path.join(current_path, "animations/")
+	animationsPath = os.path.join(current_path, "animations")
 	if not os.path.exists(animationsPath):
 		os.mkdir(animationsPath)
 
@@ -67,7 +65,7 @@ def process_frames(name, full_file_name, max_width, max_height, frame_skipping, 
 		os.mkdir(output_folder_name)
 
 	# Create data folder.
-	output_data_folder_name = os.path.join(output_folder_name , "data/")
+	output_data_folder_name = os.path.join(output_folder_name , "data")
 	if not os.path.exists(output_data_folder_name):
 		os.mkdir(output_data_folder_name)
 
@@ -97,7 +95,7 @@ def get_new_width(extension, video, old_image, input_path, new_height, max_width
 			old_width = old_image.size[0]
 			old_height = old_image.size[1]
 		except IOError:
-			print("Can\'t load!")
+			print("Can't load!")
 	else:
 		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
 
@@ -108,7 +106,7 @@ def get_new_width(extension, video, old_image, input_path, new_height, max_width
 
 
 def create_output_file(folder, name):
-	output_path = folder + "/" + str(name) + ".txt"
+	output_path = os.path.join(folder, str(name) + ".txt")
 	return open(output_path, "w")
 
 
@@ -291,7 +289,7 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 	if used_frame_count % frames_to_update_stats == 0 or used_frame_count == frame_count:
 		print_stats(name, used_frame_count, frame_count, start_frame_time, get_frame_time, preparing_loop_time, looping_time, writing_time, start_anim_processing_time)
 
-	string_byte_count = len(final_string.encode("utf8"))
+	string_byte_count = len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
 
 	return string_byte_count
 
