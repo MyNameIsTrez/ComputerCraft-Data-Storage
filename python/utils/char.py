@@ -1,4 +1,5 @@
-import math
+# import numpy as np
+# from scipy.spatial.distance import sqeuclidean as sqdistance
 from bisect import bisect_left
 
 
@@ -514,6 +515,8 @@ color_palette = [
 	]
 ]
 
+smallest_diff = 282.5
+
 
 ## FUNCTIONS ####################
 
@@ -532,20 +535,27 @@ def get_brightness_normal(tup):
 	else: # TODO: Not sure if necessary.
 		return 0
 
+
+# def find_nearest(array, value):
+#     distances = np.asarray([sqdistance(color, value) for color in array])
+#     return distances.argmin(axis=0)
+
+# def get_color_from_palette(pixel):
+# 	smallestDiffIndex = find_nearest(color_palette, pixel[:3])
+# 	return chars_extended[smallestDiffIndex]
+
+
 def get_color_from_palette(pixel):
-	smallestDiff = math.inf
-	smallestDiffIndex = None  # TODO: Test if this line is necessary.
-	
-	# TODO: Check if it's slower to just loop through the colors instead of the indices.
-	for i in range(len(color_palette)):
+	smallest_found_diff = 3 * 255 ** 2 # Init with largest possible diff.
+	for i in range(94):
 		clr = color_palette[i]
 		diff = (pixel[0] - clr[0]) ** 2 + (pixel[1] - clr[1]) ** 2 + (pixel[2] - clr[2]) ** 2
-
-		if diff < smallestDiff:
-			smallestDiff = diff
+		if diff < smallest_diff: # TODO: Figure out *why* this doesn't seem to speedup the program, even though ~37% of pixels goes here. 
+			return chars_extended[i], True
+		if diff < smallest_found_diff:
+			smallest_found_diff = diff
 			smallestDiffIndex = i
-	
-	return chars_extended[smallestDiffIndex]
+	return chars_extended[smallestDiffIndex], False
 
 
 def take_closest(indices, my_number):
