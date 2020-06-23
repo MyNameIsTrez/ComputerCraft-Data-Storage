@@ -260,6 +260,7 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 
 	for y in range(new_height):
 		for x in range(modified_width):
+			# TODO: Let NP access the frame_pixels array directly, instead of looping through each pixel manually!
 			string += char.get_char(frame_pixels[x, y], char_type)
 
 		# the last character in a frame doesn't need a return character after it

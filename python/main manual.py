@@ -62,16 +62,16 @@ files_info = {
 		# 	"name": "takeout",
 		# 	"extension": "mp4",
 		# 	"options": [
-		# 		{
-		# 			"char_type": "vanilla",
-		# 			"width": 10,
-		# 			"height": 10
-		# 		},
-		# 		{
-		# 			"char_type": "grayscale",
-		# 			"width": 10,
-		# 			"height": 10
-		# 		},
+		# 		# {
+		# 		# 	"char_type": "vanilla",
+		# 		# 	"width": 10,
+		# 		# 	"height": 10
+		# 		# },
+		# 		# {
+		# 		# 	"char_type": "grayscale",
+		# 		# 	"width": 10,
+		# 		# 	"height": 10
+		# 		# },
 		# 		{
 		# 			"char_type": "color",
 		# 			"width": 10,
@@ -142,8 +142,8 @@ files_info = {
 				# },
 				{
 					"char_type": "color",
-					"width": 426,
-					"height": 160
+					"width": 10,
+					"height": 10
 				}
 			]
 		},
