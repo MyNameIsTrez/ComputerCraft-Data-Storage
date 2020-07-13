@@ -20,12 +20,13 @@ const sleep = ms => {
 }
 
 const dbInsert = entry => {
-	// return sleep(1000).then(v => fruitBasket[fruit])
-	return sleep(1000).then(v => 69);
-	// db.insert(entry, (err, inserted) => {
-	// 	if (err) throw err;
-	// 	return inserted._id;
-	// });
+	// return sleep(1000).then(_ => 69);
+	return new Promise(function (resolve, reject) {
+		db.insert(entry, (err, inserted) => {
+			if (err) reject(err);
+			else resolve(inserted._id);
+		});
+	});
 }
 
 
