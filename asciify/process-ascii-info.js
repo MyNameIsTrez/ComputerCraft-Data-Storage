@@ -15,12 +15,7 @@ app.listen(3000, "0.0.0.0", () => {
 // so the content-type of those is always 'application/x-www-form-urlencoded'.
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const sleep = ms => {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 const dbInsert = entry => {
-	// return sleep(1000).then(_ => 69);
 	return new Promise(function (resolve, reject) {
 		db.insert(entry, (err, inserted) => {
 			if (err) reject(err);
@@ -29,46 +24,25 @@ const dbInsert = entry => {
 	});
 }
 
-
-const foo = async info => {
-	console.log('Start');
-
-	const promises = info.entries.map(async entry => {
+const addIDsAndRender = async entries => {
+	const promises = entries.map(async entry => {
 		const id = await dbInsert(entry);
-		return id;
+		entry.id = id;
+		createAsciiFolder(id);
 	})
-
 	const entryIDs = await Promise.all(promises);
-	console.log(`entryIDs: ${entryIDs}`);
-
-	console.log('End');
-
-	// renderAscii(info.entries, entryIDs);
-
-	// let entryIDs = {};
-	// for (const entry of info.entries) {
-	// 	dbInsertEntry(entry)
-	// 		.then(cake => console.log(cake))
-	// 		.catch(err => console.log(err))
-	// 	// const id = dbInsertEntry(entry, entryIDs, (id, entryIDs) => {
-	// 	// 	entryIDs.push(id);
-	// 	// 	createAsciiFolder(id);
-	// 	// 	console.log(`1: ${entryIDs}`);
-	// 	// });
-	// 	// console.log(`2: ${entryIDs}`);
-	// }
+	renderAscii(entries);
 }
 
 app.post("/add", (request, response) => {
 	const info = repairMangledInfo(request.body);
 	const format = checkInfoFormat(info);
 	if (format === true) {
-		foo(info);
+		addIDsAndRender(info.entries);
 	} else {
 		createError(format);
 	}
-	// ComputerCraft v1.33 doesn't feature http.post returning anything,
-	// so don't bother sending anything back.
+	// ComputerCraft v1.33 doesn't feature http.post returning anything, so don't bother replying back.
 	response.end();
 });
 
@@ -99,31 +73,13 @@ function createAsciiFolder(id) {
 	fs.mkdirSync(`ascii-frames/${id}`);
 }
 
-const dbInsertEntry = entry => {
-	return new Promise((resolve, reject) => {
-		db.insert(entry, (err, inserted) => {
-			if (err) reject(err);
-			resolve(inserted._id);
-		});
-	})
-}
+function renderAscii(entries) {
+	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));
 
-// function dbInsertEntry(entry) {
-// 	db.insert(entry, (err, inserted) => {
-// 		if (err) throw err;
-// 		return inserted._id;
-// 	});
-// }
-
-function renderAscii(entry, entryIDs) {
-	// const args = [JSON.stringify(entry), JSON.stringify(entryIDs)];
-	// console.log(args);
-	// const sensor = spawn("python", ["python/render.py"].concat(args));
-
-	// // Prints whatever Python has attempted to print
-	// sensor.stdout.on("data", function (buffer) {
-	// 	console.log(buffer.toString());
-	// });
+	// Prints whatever Python has attempted to print
+	sensor.stdout.on("data", function (buffer) {
+		console.log(buffer.toString());
+	});
 }
 
 function createError(err) {

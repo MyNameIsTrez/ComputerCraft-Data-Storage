@@ -9,18 +9,15 @@ from PIL import Image
 import utils.char as char
 
 
-# Function I stole from StackOverflow:
-# https://stackoverflow.com/a/35844551
-def download_files(files_info, current_path):
-	print("Downloading:")
-	pathTempDownloads = os.path.join(current_path, "temp downloads")
-	if not os.path.exists(pathTempDownloads):
-		os.mkdir(pathTempDownloads)
-	for file_info in files_info["data"]:
-		print("    '" + file_info["name"] + "'")
+def download_url_files(files_info, temp_downloads_path):
+	if not os.path.exists(temp_downloads_path):
+		os.mkdir(temp_downloads_path)
+	for file_info in files_info:
+		filename = file_info["url_name"]
+		print("    '" + filename + "'")
 		r = requests.get(file_info["url"], stream=True)
-		fileName = os.path.join(pathTempDownloads, file_info["name"] + "." + file_info["extension"])
-		with open(fileName, "wb") as f:
+		file_path = os.path.join(temp_downloads_path, filename + "." + file_info["extension"])
+		with open(file_path, "wb") as f:
 			for chunk in r.iter_content(chunk_size=1024):
 				if chunk:
 					f.write(chunk)
@@ -28,28 +25,30 @@ def download_files(files_info, current_path):
 	print()
 
 
-def process_frames(name, full_file_name, max_width, max_height, frame_skipping, char_type, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
-	extension = full_file_name.split(".")[1]  # Get the extension after the ".".
-	
-	input_path = os.path.join(current_path, "temp downloads" , full_file_name)
+def remove_url_files(temp_downloads_path):
+	for name in os.listdir(temp_downloads_path):
+		if name != ".empty":
+			os.remove(os.path.join(temp_downloads_path, name))
 
+
+def process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
 	if extension == "mp4":
-		video = cv2.VideoCapture(input_path)
+		video = cv2.VideoCapture(url_file_path)
 		old_image = None
 	else:
 		video = None
-		old_image = Image.open(input_path)
+		old_image = Image.open(url_file_path)
 
 	new_height = max_height
-	new_width = get_new_width(extension, video, old_image, input_path, new_height, max_width, new_width_stretched)
+	new_width = get_new_width(extension, video, old_image, new_height, max_width, new_width_stretched)
 
 	# Create folder "animations".
 	animationsPath = os.path.join(current_path, "animations")
 	if not os.path.exists(animationsPath):
 		os.mkdir(animationsPath)
 
-	# Create folder with the char_type as the name.
-	charTypePath = os.path.join(animationsPath, char_type)
+	# Create folder with the palette as the name.
+	charTypePath = os.path.join(animationsPath, palette)
 	if not os.path.exists(charTypePath):
 		os.mkdir(charTypePath)
 
@@ -59,7 +58,7 @@ def process_frames(name, full_file_name, max_width, max_height, frame_skipping, 
 		os.mkdir(output_folder_size_name)
 
 	# Create animation folder.
-	output_file_name = name.replace(" ", "_")
+	output_file_name = url_name.replace(" ", "_")
 	output_folder_name = os.path.join(output_folder_size_name, output_file_name)
 	if not os.path.exists(output_folder_name):
 		os.mkdir(output_folder_name)
@@ -70,11 +69,11 @@ def process_frames(name, full_file_name, max_width, max_height, frame_skipping, 
 		os.mkdir(output_data_folder_name)
 
 	if extension == "mp4":
-		used_frame_count, data_frames_count = process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, char_type, max_bytes_per_file, frames_to_update_stats, name)
+		used_frame_count, data_frames_count = process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, palette, max_bytes_per_file, frames_to_update_stats, url_name)
 	elif extension == "gif":
-		used_frame_count, data_frames_count = process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, char_type, max_bytes_per_file, frames_to_update_stats, name)
+		used_frame_count, data_frames_count = process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, palette, max_bytes_per_file, frames_to_update_stats, url_name)
 	elif extension == "jpeg" or extension == "png" or extension == "jpg":
-		used_frame_count, data_frames_count = process_image_frame(output_data_folder_name, old_image, new_width, new_height, char_type, frames_to_update_stats, name)
+		used_frame_count, data_frames_count = process_image_frame(output_data_folder_name, old_image, new_width, new_height, palette, frames_to_update_stats, url_name)
 	else:
 		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
 
@@ -85,7 +84,7 @@ def process_frames(name, full_file_name, max_width, max_height, frame_skipping, 
 	print()
 
 
-def get_new_width(extension, video, old_image, input_path, new_height, max_width, new_width_stretched):
+def get_new_width(extension, video, old_image, new_height, max_width, new_width_stretched):
 	if extension == "mp4":
 		# get information about the video file
 		old_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
@@ -128,7 +127,7 @@ def try_create_new_output_file(line_num, file_byte_count, output_file, output_da
 	return line_num, file_byte_count, output_file, data_frames_count
 
 
-def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, char_type, max_bytes_per_file, frames_to_update_stats, name):
+def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, palette, max_bytes_per_file, frames_to_update_stats, name):
 	i = 0
 	used_frame_count = 0
 
@@ -163,7 +162,7 @@ def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width
 
 				start_anim_processing_time = start_time
 
-				file_byte_count += process_frame(pil_frame, used_frame_count, line_num, new_width, new_height, output_file, new_frame_count, start_frame_time, get_frame_time, char_type, frames_to_update_stats, start_anim_processing_time, name)
+				file_byte_count += process_frame(pil_frame, used_frame_count, line_num, new_width, new_height, output_file, new_frame_count, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
 			i += 1
 		else:
 			video.release()
@@ -171,7 +170,7 @@ def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width
 			return used_frame_count, data_frames_count - 1
 
 
-def process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, char_type, max_bytes_per_file, frames_to_update_stats, name):
+def process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, palette, max_bytes_per_file, frames_to_update_stats, name):
 	i = 0
 	used_frame_count = 0
 
@@ -197,7 +196,7 @@ def process_gif_frames(output_data_folder_name, old_image, new_width, new_height
 
 				start_anim_processing_time = start_time
 
-				file_byte_count += process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, None, start_frame_time, get_frame_time, char_type, frames_to_update_stats, start_anim_processing_time, name)
+				file_byte_count += process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, None, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
 
 				old_image.seek(old_image.tell() + 1)  # gets the next frame
 			i += 1
@@ -208,7 +207,7 @@ def process_gif_frames(output_data_folder_name, old_image, new_width, new_height
 		return used_frame_count, data_frames_count - 1
 
 
-def process_image_frame(output_data_folder_name, old_image, new_width, new_height, char_type, frames_to_update_stats, name):
+def process_image_frame(output_data_folder_name, old_image, new_width, new_height, palette, frames_to_update_stats, name):
 	data_frames_count = 1
 	line_num = 0
 
@@ -229,14 +228,14 @@ def process_image_frame(output_data_folder_name, old_image, new_width, new_heigh
 
 	start_anim_processing_time = time.time()
 
-	process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, 1, start_frame_time, get_frame_time, char_type, frames_to_update_stats, start_anim_processing_time, name)
+	process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, 1, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
 
 	output_file.close()
 
 	return used_frame_count, data_frames_count
 
 
-def process_frame(frame, used_frame_count, line_num, new_width, new_height, output_file, frame_count, start_frame_time, get_frame_time, char_type, frames_to_update_stats, start_anim_processing_time, name):
+def process_frame(frame, used_frame_count, line_num, new_width, new_height, output_file, frame_count, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name):
 	preparing_loop_start_time = time.time()
 
 	# not sure if it is necessary to convert the frame into RGBA!
@@ -261,7 +260,7 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 	for y in range(new_height):
 		for x in range(modified_width):
 			# TODO: Let NP access the frame_pixels array directly, instead of looping through each pixel manually!
-			string += char.get_char(frame_pixels[x, y], char_type)
+			string += char.get_char(frame_pixels[x, y], palette)
 
 		# the last character in a frame doesn't need a return character after it
 		if y < new_height - 1:

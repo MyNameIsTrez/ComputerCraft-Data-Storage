@@ -36,39 +36,32 @@ frames_to_update_stats = 1
 # EXECUTION OF THE PROGRAM #######################################
 
 
-# args = json.loads(sys.argv)
-args = sys.argv
-info = json.loads(args[1])
-info_id = json.loads(args[2])
-print(info, info_id, info["url"], flush=True)
+files_info = json.loads(sys.argv[1])
+print(files_info, files_info[0]["id"])
 
 t0 = time.time()
 
-processing.download_files(info, current_path)
-
-tempDownloadsPath = os.path.join(current_path, "temp downloads")
+print("Downloading URL files:")
+temp_downloads_path = os.path.join(current_path, "temp downloads")
+processing.download_url_files(files_info, temp_downloads_path)
 
 print("\nProcessing:")
-
-for file_info in info["data"]:
-	name = file_info["name"]
+for file_info in files_info:
+	url_name = file_info["url_name"]
 	extension = file_info["extension"]
-	full_name = os.path.join(name + "." + extension)
-	for size in file_info["options"]:
-		char_type = size["char_type"]
-		max_width = size["width"]
-		max_height = size["height"]
-		processing.process_frames(name, full_name, max_width, max_height, frame_skipping, char_type, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
+	url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
+	for variation in file_info["variations"]:
+		palette = variation["palette"]
+		max_width = variation["width"]
+		max_height = variation["height"]
+		processing.process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
 
-for name in os.listdir(tempDownloadsPath):
-	if name != ".empty":
-		os.remove(os.path.join(tempDownloadsPath, name))
+processing.remove_url_files(temp_downloads_path)
 
 # Print the time it took to run the program.
 time_elapsed = time.time() - t0
 minutes = floor(time_elapsed / 60)
 seconds = time_elapsed % 60
-
 print("\n\nDone! Duration: {}m, {:.2f}s".format(minutes, seconds))
 
 # sys.stdout.write("\033[F") # Cursor up one line

@@ -525,10 +525,10 @@ smallest_diff = 282.5
 ## FUNCTIONS ####################
 
 
-def get_char(pixel, char_type):
-	if char_type == "vanilla" or char_type == "grayscale":	
-		return get_closest_char(get_brightness_normal(pixel), char_type)
-	elif char_type == "color":
+def get_char(pixel, palette):
+	if palette == "vanilla" or palette == "grayscale":	
+		return get_closest_char(get_brightness_normal(pixel), palette)
+	elif palette == "color":
 		return get_color_from_palette(pixel)
 
 def get_brightness_normal(tup):
@@ -562,13 +562,13 @@ def get_color_from_palette(pixel):
 
 
 # The given n should be between 0 and 1, both inclusive.
-def get_closest_char(n, char_type):
+def get_closest_char(n, palette):
 	if not (n >= 0 and n <= 1):
 		raise ValueError("get_closest_char expected a float between 0 and 1, both inclusive")
 
-	if char_type == "vanilla":
+	if palette == "vanilla":
 		return chars_vanilla[take_closest(char_indices_vanilla, n * 20)]
-	elif char_type == "grayscale":
+	elif palette == "grayscale":
 		return chars_extended[take_closest(char_indices_extended, n * 94)]
 
 def take_closest(indices, my_number):
