@@ -1,0 +1,19 @@
+<html>
+
+<body>
+	<script>
+		console.log(1);
+		const data = { lat: 10, lon: 20 };
+		const options = {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify(data)
+		}
+		fetch("/add", options);
+		console.log(2);
+	</script>
+</body>
+
+</html>

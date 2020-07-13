@@ -12,7 +12,7 @@ color_path = 'extra/fonts/color'
 if not os.path.exists(color_path):
     os.makedirs(color_path)
 
-with open('extra/palette.json') as palette:
+with open('extra/fonts/palette.json') as palette:
 	colors = json.loads(palette.read())
 
 def get_color(i):

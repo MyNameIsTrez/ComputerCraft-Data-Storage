@@ -1,0 +1,17 @@
+{
+	"password": "MyNameIsTrez",
+	"entries": [
+		{
+			"url": "https://media.giphy.com/media/7GcdjWkek7Apq/giphy.gif",
+			"extension": "gif",
+			"variations": [
+				{
+					"name": "coincidence",
+					"palette": "vanilla",
+					"width": 426,
+				 	"height": 160
+				}
+			]
+		}
+	]
+}
