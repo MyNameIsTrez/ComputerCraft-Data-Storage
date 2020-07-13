@@ -39,18 +39,18 @@ frames_to_update_stats = 1
 # args = json.loads(sys.argv)
 args = sys.argv
 info = json.loads(args[1])
-info_id = args[2]
-print(info, info_id, flush=True)
+info_id = json.loads(args[2])
+print(info, info_id, info["url"], flush=True)
 
 t0 = time.time()
 
-processing.download_files(files_info, current_path)
+processing.download_files(info, current_path)
 
 tempDownloadsPath = os.path.join(current_path, "temp downloads")
 
 print("\nProcessing:")
 
-for file_info in files_info["data"]:
+for file_info in info["data"]:
 	name = file_info["name"]
 	extension = file_info["extension"]
 	full_name = os.path.join(name + "." + extension)
