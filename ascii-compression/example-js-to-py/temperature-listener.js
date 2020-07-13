@@ -7,7 +7,7 @@ args.push(1)
 
 const sensor = spawn("python", args);
 
-// Gets called whenever print is called in Python
+// Gets whatever Python has printed
 sensor.stdout.on("data", function (data) {
 	// Converts Buffer object to Float
 	temperatures.push(parseFloat(data));
