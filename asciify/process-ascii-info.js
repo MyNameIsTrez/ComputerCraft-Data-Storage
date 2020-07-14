@@ -30,7 +30,7 @@ const addIDsAndRender = async entries => {
 		entry.id = id;
 		createAsciiFolder(id);
 	})
-	const entryIDs = await Promise.all(promises);
+	await Promise.all(promises);
 	renderAscii(entries);
 }
 
