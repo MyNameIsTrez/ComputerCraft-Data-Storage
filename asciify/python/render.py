@@ -37,15 +37,16 @@ frames_to_update_stats = 1
 
 
 files_info = json.loads(sys.argv[1])
-print(files_info, files_info[0]["id"])
+# print(files_info, files_info[0]["id"])
 
 t0 = time.time()
 
-print("Downloading URL files:")
+print("\nDownloading URL files:")
 temp_downloads_path = os.path.join(current_path, "temp downloads")
 processing.download_url_files(files_info, temp_downloads_path)
 
 print("\nProcessing:")
+# ascii_frames_path = os.path.join(current_path, "temp downloads")
 for file_info in files_info:
 	url_name = file_info["url_name"]
 	extension = file_info["extension"]
@@ -54,7 +55,10 @@ for file_info in files_info:
 		palette = variation["palette"]
 		max_width = variation["width"]
 		max_height = variation["height"]
-		processing.process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
+		animations_path = os.path.join(current_path, "..", "ascii-frames")
+		processing.process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, animations_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
+		# variation_info = (url_file_path, url_name, extension, displayed_name, palette, width, height)
+		# processing.process_frames(variation_info, ascii_frames_path, frame_skipping, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
 
 processing.remove_url_files(temp_downloads_path)
 
@@ -62,7 +66,7 @@ processing.remove_url_files(temp_downloads_path)
 time_elapsed = time.time() - t0
 minutes = floor(time_elapsed / 60)
 seconds = time_elapsed % 60
-print("\n\nDone! Duration: {}m, {:.2f}s".format(minutes, seconds))
+print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds))
 
 # sys.stdout.write("\033[F") # Cursor up one line
 # sys.stdout.write("\033[K") # Clear to the end of line

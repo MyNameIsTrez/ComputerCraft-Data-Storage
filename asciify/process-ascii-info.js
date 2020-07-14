@@ -26,9 +26,7 @@ const dbInsert = entry => {
 
 const addIDsAndRender = async entries => {
 	const promises = entries.map(async entry => {
-		const id = await dbInsert(entry);
-		entry.id = id;
-		createAsciiFolder(id);
+		entry.id = await dbInsert(entry);
 	})
 	await Promise.all(promises);
 	renderAscii(entries);
@@ -68,10 +66,6 @@ function checkInfoFormat(info) {
 const db = new Datastore({
 	filename: "ascii-info.db", autoload: true
 });
-
-function createAsciiFolder(id) {
-	fs.mkdirSync(`ascii-frames/${id}`);
-}
 
 function renderAscii(entries) {
 	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));

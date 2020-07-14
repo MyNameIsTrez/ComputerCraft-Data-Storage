@@ -22,7 +22,6 @@ def download_url_files(files_info, temp_downloads_path):
 				if chunk:
 					f.write(chunk)
 			f.close()  # Necessary?
-	print()
 
 
 def remove_url_files(temp_downloads_path):
@@ -31,7 +30,7 @@ def remove_url_files(temp_downloads_path):
 			os.remove(os.path.join(temp_downloads_path, name))
 
 
-def process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, current_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
+def process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, animations_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
 	if extension == "mp4":
 		video = cv2.VideoCapture(url_file_path)
 		old_image = None
@@ -43,12 +42,11 @@ def process_frames(url_name, extension, url_file_path, max_width, max_height, fr
 	new_width = get_new_width(extension, video, old_image, new_height, max_width, new_width_stretched)
 
 	# Create folder "animations".
-	animationsPath = os.path.join(current_path, "animations")
-	if not os.path.exists(animationsPath):
-		os.mkdir(animationsPath)
+	if not os.path.exists(animations_path):
+		os.mkdir(animations_path)
 
 	# Create folder with the palette as the name.
-	charTypePath = os.path.join(animationsPath, palette)
+	charTypePath = os.path.join(animations_path, palette)
 	if not os.path.exists(charTypePath):
 		os.mkdir(charTypePath)
 
