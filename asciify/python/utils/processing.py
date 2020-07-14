@@ -30,76 +30,56 @@ def remove_url_files(temp_downloads_path):
 			os.remove(os.path.join(temp_downloads_path, name))
 
 
-def process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, animations_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats):
-	if extension == "mp4":
-		video = cv2.VideoCapture(url_file_path)
-		old_image = None
+def process_frames(info):
+	if info["extension"] == "mp4":
+		info["video"] = cv2.VideoCapture(url_file_path)
+		info["old_image"] = None
 	else:
-		video = None
-		old_image = Image.open(url_file_path)
+		info["video"] = None
+		info["old_image"] = Image.open(url_file_path)
 
-	new_height = max_height
-	new_width = get_new_width(extension, video, old_image, new_height, max_width, new_width_stretched)
+	info["new_width"] = get_new_width(info, video, old_image)
 
-	# Create folder "animations".
-	if not os.path.exists(animations_path):
-		os.mkdir(animations_path)
+	# Create a folder for storing the ASCII frames for this variation.
+	info["ascii_frames_variation_path"] = os.path.join(info["ascii_frames_path"], info["id"])
+	if not os.path.exists(info["ascii_frames_variation_path"]):
+		os.mkdir(info["ascii_frames_variation_path"])
 
-	# Create folder with the palette as the name.
-	charTypePath = os.path.join(animations_path, palette)
-	if not os.path.exists(charTypePath):
-		os.mkdir(charTypePath)
-
-	# Create folder with the size as the name.
-	output_folder_size_name = os.path.join(charTypePath, "size_" + str(new_width) + "x" + str(new_height))
-	if not os.path.exists(output_folder_size_name):
-		os.mkdir(output_folder_size_name)
-
-	# Create animation folder.
-	output_file_name = url_name.replace(" ", "_")
-	output_folder_name = os.path.join(output_folder_size_name, output_file_name)
-	if not os.path.exists(output_folder_name):
-		os.mkdir(output_folder_name)
-
-	# Create data folder.
-	output_data_folder_name = os.path.join(output_folder_name , "data")
-	if not os.path.exists(output_data_folder_name):
-		os.mkdir(output_data_folder_name)
-
-	if extension == "mp4":
-		used_frame_count, data_frames_count = process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, palette, max_bytes_per_file, frames_to_update_stats, url_name)
-	elif extension == "gif":
-		used_frame_count, data_frames_count = process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, palette, max_bytes_per_file, frames_to_update_stats, url_name)
-	elif extension == "jpeg" or extension == "png" or extension == "jpg":
-		used_frame_count, data_frames_count = process_image_frame(output_data_folder_name, old_image, new_width, new_height, palette, frames_to_update_stats, url_name)
+	if info["extension"] == "mp4":
+		info = process_mp4_frames(info)
+	elif info["extension"] == "gif":
+		info = process_gif_frames(info)
+	elif info["extension"] == "jpeg" or info["extension"] == "png" or info["extension"] == "jpg":
+		info = process_image_frame(info)
 	else:
-		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
+		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
 
 	output_info_file = create_output_file(output_folder_name, "info")
-	string = "{frame_count=" + str(used_frame_count) + ",width=" + str(new_width) + ",height=" + str(new_height) + ",data_files=" + str(data_frames_count) + "}"
+	string = "{frame_count=" + str(info["used_frame_count"]) + ",width=" + str(info["new_width"]) + ",height=" + str(info["height"]) + ",data_files=" + str(info["data_frames_count"]) + "}"
 	output_info_file.write(string)
 	output_info_file.close()
 	print()
 
 
-def get_new_width(extension, video, old_image, new_height, max_width, new_width_stretched):
-	if extension == "mp4":
+def get_new_width(info):
+	if info["extension"] == "mp4":
 		# get information about the video file
-		old_width = video.get(cv2.CAP_PROP_FRAME_WIDTH)
-		old_height = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
-	elif extension == "gif" or extension == "jpeg" or extension == "png" or extension == "jpg":
+		old_width = info["video"].get(cv2.CAP_PROP_FRAME_WIDTH)
+		old_height = info["video"].get(cv2.CAP_PROP_FRAME_HEIGHT)
+	elif info["extension"] == "gif" or info["extension"] == "jpeg" or info["extension"] == "png" or info["extension"] == "jpg":
 		try:
-			old_width = old_image.size[0]
-			old_height = old_image.size[1]
+			# TODO: refactor this into a one-liner
+			old_width = info["old_image"].size[0]
+			old_height = info["old_image"].size[1]
 		except IOError:
 			print("Can't load!")
 	else:
 		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
 
-	if new_width_stretched:
-		return max_width
+	if info["new_width_stretched"]:
+		return info["width"]
 	else:
-		return int(new_height * old_width / old_height)
+		return int(info["height"] * old_width / old_height)
 
 
 def create_output_file(folder, name):
@@ -107,139 +87,95 @@ def create_output_file(folder, name):
 	return open(output_path, "w")
 
 
-def try_create_new_output_file(line_num, file_byte_count, output_file, output_data_folder_name, data_frames_count, max_bytes_per_file):
-	line_num += 1
-
-	if file_byte_count >= max_bytes_per_file:
-		file_byte_count = 0
-
-		if output_file:
-			output_file.close()
-
-		output_file = create_output_file(output_data_folder_name, data_frames_count)
-
-		data_frames_count += 1
-
-		line_num = 1
-
-	return line_num, file_byte_count, output_file, data_frames_count
+def try_create_new_output_file(info):
+	if info["file_byte_count"] >= info["max_bytes_per_file"]:
+		info["file_byte_count"] = 0
+		if info["output_file"]:
+			info["output_file"].close()
+		info["output_file"] = create_output_file(info["ascii_frames_variation_path"], info["data_frames_count"])
+		info["data_frames_count"] += 1
+	return info
 
 
-def process_mp4_frames(output_data_folder_name, video, frame_skipping, new_width, new_height, palette, max_bytes_per_file, frames_to_update_stats, name):
+def process_mp4_frames(info):
 	i = 0
-	used_frame_count = 0
-
-	actual_frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-	new_frame_count = floor(actual_frame_count / frame_skipping)
-
-	file_byte_count = 0
-	output_file = create_output_file(output_data_folder_name, 1)
-	data_frames_count = 2
-	line_num = 0
-
-	start_time = time.time()
-
+	info["used_frame_count"] = 0
+	actual_frame_count = int(info["video"].get(cv2.CAP_PROP_FRAME_COUNT))
+	info["new_frame_count"] = floor(actual_frame_count / info["frame_skipping"])
+	info["file_byte_count"] = 0
+	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
+	info["data_frames_count"] = 2
+	info["start_time"] = time.time()
 	while True:
-		start_frame_time = time.time()
-
-		hasFrames, cv2_frame = video.read()
-
-		if hasFrames:
-			if i % frame_skipping == 0:
-				used_frame_count += 1
-
-				line_num, file_byte_count, output_file, data_frames_count = try_create_new_output_file(line_num, file_byte_count, output_file, output_data_folder_name, data_frames_count, max_bytes_per_file)
-
+		info["start_frame_time"] = time.time()
+		has_frames, cv2_frame = info["video"].read()
+		if has_frames:
+			if i % info["frame_skipping"] == 0:
+				info["used_frame_count"] += 1
+				info = try_create_new_output_file(info)
 				# cv2_frame = cv2.cvtColor(cv2_frame, cv2.COLOR_BGR2RGB)
-
-				cv2_frame = cv2.resize(cv2_frame, (new_width - 1, new_height))
-
-				pil_frame = Image.fromarray(cv2_frame)  # pil pixels can be read faster than cv2 pixels, it seems
-
-				get_frame_time = time.time() - start_frame_time  # 40 frames/s
-
-				start_anim_processing_time = start_time
-
-				file_byte_count += process_frame(pil_frame, used_frame_count, line_num, new_width, new_height, output_file, new_frame_count, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
+				cv2_frame = cv2.resize(cv2_frame, (info["new_width"] - 1, info["height"]))
+				info["frame"] = Image.fromarray(cv2_frame)  # pil pixels can be read faster than cv2 pixels, according to my tests
+				info["get_frame_time"] = time.time() - info["start_frame_time"]
+				info = process_frame(info)
 			i += 1
 		else:
-			video.release()
-			output_file.close()
-			return used_frame_count, data_frames_count - 1
+			info["video"].release()
+			info["output_file"].close()
+			info["data_frames_count"] -= 1
+			return info
 
 
-def process_gif_frames(output_data_folder_name, old_image, new_width, new_height, frame_skipping, palette, max_bytes_per_file, frames_to_update_stats, name):
+def process_gif_frames(info):
 	i = 0
-	used_frame_count = 0
-
-	file_byte_count = 0
-	output_file = create_output_file(output_data_folder_name, 1)
-	data_frames_count = 2
-	line_num = 0
-
-	start_time = time.time()
-
+	info["used_frame_count"] = 0
+	info["new_frame_count"] = None
+	info["file_byte_count"] = 0
+	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
+	info["data_frames_count"] = 2
+	info["start_time"] = time.time()
 	try:
 		while True:
-			start_frame_time = time.time()
-
-			if i % frame_skipping == 0:
-				used_frame_count += 1
-
-				line_num, file_byte_count, output_file, data_frames_count = try_create_new_output_file(line_num, file_byte_count, output_file, output_data_folder_name, data_frames_count, max_bytes_per_file)
-
-				new_image = old_image.resize((new_width - 1, new_height), Image.ANTIALIAS)
-
-				get_frame_time = time.time() - start_frame_time
-
-				start_anim_processing_time = start_time
-
-				file_byte_count += process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, None, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
-
-				old_image.seek(old_image.tell() + 1)  # gets the next frame
+			info["start_frame_time"] = time.time()
+			if i % info["frame_skipping"] == 0:
+				info["used_frame_count"] += 1
+				info = try_create_new_output_file(info)
+				info["frame"] = info["old_image"].resize((info["new_width"] - 1, info["height"]), Image.ANTIALIAS)
+				info["get_frame_time"] = time.time() - info["start_frame_time"]
+				info = process_frame(info)
+				info["old_image"].seek(info["old_image"].tell() + 1)  # gets the next frame
 			i += 1
 	except:
-		# this part gets reached when the code tries to find the next frame, while it doesn't exist
-		output_file.close()
-
-		return used_frame_count, data_frames_count - 1
-
-
-def process_image_frame(output_data_folder_name, old_image, new_width, new_height, palette, frames_to_update_stats, name):
-	data_frames_count = 1
-	line_num = 0
-
-	output_file = create_output_file(output_data_folder_name, 1)
-
-	start_frame_time = time.time()
-
-	new_image = old_image.resize((new_width - 1, new_height), Image.ANTIALIAS)
-	# new_image = old_image.resize((new_width - 1, new_height), Image.NEAREST)
-	# new_image = old_image.resize((new_width - 1, new_height), Image.BILINEAR)
-	# new_image = old_image.resize((new_width - 1, new_height), Image.BICUBIC)
-
-	# new_image = new_image.convert("RGB")
-
-	used_frame_count = 1
-
-	get_frame_time = time.time() - start_frame_time
-
-	start_anim_processing_time = time.time()
-
-	process_frame(new_image, used_frame_count, line_num, new_width, new_height, output_file, 1, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
-
-	output_file.close()
-
-	return used_frame_count, data_frames_count
+		# this part gets reached when the code tries to find the next frame, while it has reached the end of the gif
+		info["output_file"].close()
+		info["data_frames_count"] -= 1
+		return info
 
 
-def process_frame(frame, used_frame_count, line_num, new_width, new_height, output_file, frame_count, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name):
+def process_image_frame(info):
+	info["used_frame_count"] = 1
+	info["new_frame_count"] = 1
+	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
+	info["data_frames_count"] = 1
+	info["start_time"] = time.time()
+	info["start_frame_time"] = time.time()
+	info["frame"] = info["old_image"].resize((info["new_width"] - 1, info["height"]), Image.ANTIALIAS)
+	# frame = old_image.resize((new_width - 1, info["height"]), Image.NEAREST)
+	# frame = old_image.resize((new_width - 1, info["height"]), Image.BILINEAR)
+	# frame = old_image.resize((new_width - 1, info["height"]), Image.BICUBIC)
+	# frame = frame.convert("RGB")
+	info["get_frame_time"] = time.time() - info["start_frame_time"]
+	process_frame(new_image, used_frame_count, new_width, new_height, output_file, 1, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
+	info["output_file"].close()
+	return info
+
+
+def process_frame(info):
 	preparing_loop_start_time = time.time()
 
 	# not sure if it is necessary to convert the frame into RGBA!
-	frame = frame.convert("RGBA")
 	# load the pixels of the frame
-	frame_pixels = frame.load()
+	frame_pixels = info["frame"].convert("RGBA").load()
 
 	# initializes empty variables for the coming "for y, for x" loop
 	prev_char = None
@@ -248,20 +184,20 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 
 	# the \n character at the end of every line needs to have one spot reserved
 	# this should ideally be done at the resizing of the frame stage instead!
-	modified_width = new_width - 1
+	modified_width = info["new_width"] - 1
 
 	preparing_loop_end_time = time.time()
 
 	# measure the time it takes for the coming "for y, for x" loop to execute
 	looping_start_time = time.time()
 
-	for y in range(new_height):
+	for y in range(info["height"]):
 		for x in range(modified_width):
 			# TODO: Let NP access the frame_pixels array directly, instead of looping through each pixel manually!
 			string += char.get_char(frame_pixels[x, y], palette)
 
 		# the last character in a frame doesn't need a return character after it
-		if y < new_height - 1:
+		if y < info["height"] - 1:
 			# add a return character to the end of each horizontal line,
 			# so ComputerCraft can draw the entire frame with one write() statement
 			string += "\\n"
@@ -271,44 +207,43 @@ def process_frame(frame, used_frame_count, line_num, new_width, new_height, outp
 	writing_start_time = time.time()
 
 	# gives each frame its own line in the outputted file, so lines can easily be found and parsed
-	if line_num > 1:
-		final_string = "\n" + string
-	else:
+	if info["used_frame_count"] > 1:
 		final_string = string
+	else:
+		final_string = "\n" + string
 
-	output_file.write(final_string)
+	info["output_file"].write(final_string)
 
 	writing_end_time = time.time()
 
-	preparing_loop_time = preparing_loop_end_time - preparing_loop_start_time
-	looping_time = looping_end_time - looping_start_time
-	writing_time = writing_end_time - writing_start_time
+	info["preparing_loop_time"] = preparing_loop_end_time - preparing_loop_start_time
+	info["looping_time"] = looping_end_time - looping_start_time
+	info["writing_time"] = writing_end_time - writing_start_time
 
-	if used_frame_count % frames_to_update_stats == 0 or used_frame_count == frame_count:
-		print_stats(name, used_frame_count, frame_count, start_frame_time, get_frame_time, preparing_loop_time, looping_time, writing_time, start_anim_processing_time)
+	if info["used_frame_count"] % frames_to_update_stats == 0 or info["used_frame_count"] == info["new_frame_count"]:
+		print_stats(info)
 
-	string_byte_count = len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
+	info["string_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
 
-	return string_byte_count
+	return info
 
 
-def print_stats(name, used_frame_count, frame_count, start_frame_time, get_frame_time, preparing_loop_time, looping_time, writing_time, start_anim_processing_time):
-	# file name
-	file_name_str = "'" + name + "', "
+def print_stats(info):
+	file_name_str = "'" + info["displayed_name"] + "', "
 
 	# progress
-	progress = "frame " + str(used_frame_count) + "/"
-	if frame_count:
-		progress = progress + str(frame_count)
+	progress = "frame " + str(info["used_frame_count"]) + "/"
+	if info["new_frame_count"]:
+		progress = progress + str(info["new_frame_count"])
 	else:
 		progress = progress + "?"
 
 	# speed of processing the frame
-	elapsed = time.time() - start_frame_time
+	elapsed = time.time() - info["start_frame_time"]
 	if elapsed > 0:
 		processed_fps = floor(1 / elapsed)
 
-		time_spent = time.time() - start_anim_processing_time
+		time_spent = time.time() - info["start_time"]
 
 		spent_hours = floor(time_spent / 3600)
 		spent_minutes = floor(time_spent / 60) % 60
@@ -329,36 +264,36 @@ def print_stats(name, used_frame_count, frame_count, start_frame_time, get_frame
 	speed = ", speed: {} frames/s".format(processed_fps)
 
 	# speed of getting the frame
-	if get_frame_time > 0:
-		processed_fps = floor(1 / get_frame_time)
+	if info["get_frame_time"] > 0:
+		processed_fps = floor(1 / info["get_frame_time"])
 	else:
 		processed_fps = "1000+"
 	speed_2 = ", get frame: {} frames/s".format(processed_fps)
 
 	# preparing for the "for y, for x" loop
-	if preparing_loop_time > 0:
-		processed_fps = floor(1 / preparing_loop_time)
+	if info["preparing_loop_time"] > 0:
+		processed_fps = floor(1 / info["preparing_loop_time"])
 	else:
 		processed_fps = "1000+"
 	speed_3 = ", preparing loop: {} frames/s".format(processed_fps)
 
 	# speed of the "for y, for x" loop
-	if looping_time > 0:
-		processed_fps = floor(1 / looping_time)
+	if info["looping_time"] > 0:
+		processed_fps = floor(1 / info["looping_time"])
 	else:
 		processed_fps = "1000+"
 	speed_4 = ", pixel loop: {} frames/s".format(processed_fps)
 
 	# writing speed
-	if writing_time > 0:
-		processed_fps = floor(1 / writing_time)
+	if info["writing_time"] > 0:
+		processed_fps = floor(1 / info["writing_time"])
 	else:
 		processed_fps = "1000+"
 	speed_5 = ", writing: {} frames/s".format(processed_fps)
 
 	# calculate how long it should take for the program to finish
-	if frame_count:
-		frames_left = frame_count - used_frame_count
+	if info["new_frame_count"]:
+		frames_left = info["new_frame_count"] - info["used_frame_count"]
 		seconds_left = elapsed * frames_left
 
 		eta_hours = floor(seconds_left / 3600)

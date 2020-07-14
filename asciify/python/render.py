@@ -36,38 +36,54 @@ frames_to_update_stats = 1
 # EXECUTION OF THE PROGRAM #######################################
 
 
-files_info = json.loads(sys.argv[1])
-# print(files_info, files_info[0]["id"])
+try:
+	print(sys.argv)
+	files_info = json.loads(sys.argv[1])
+	# print(files_info, files_info[0]["id"])
 
-t0 = time.time()
+	t0 = time.time()
 
-print("\nDownloading URL files:")
-temp_downloads_path = os.path.join(current_path, "temp downloads")
-processing.download_url_files(files_info, temp_downloads_path)
+	print("\nDownloading URL files:")
+	temp_downloads_path = os.path.join(current_path, "temp downloads")
+	processing.download_url_files(files_info, temp_downloads_path)
 
-print("\nProcessing:")
-# ascii_frames_path = os.path.join(current_path, "temp downloads")
-for file_info in files_info:
-	url_name = file_info["url_name"]
-	extension = file_info["extension"]
-	url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
-	for variation in file_info["variations"]:
-		palette = variation["palette"]
-		max_width = variation["width"]
-		max_height = variation["height"]
-		animations_path = os.path.join(current_path, "..", "ascii-frames")
-		processing.process_frames(url_name, extension, url_file_path, max_width, max_height, frame_skipping, palette, animations_path, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
-		# variation_info = (url_file_path, url_name, extension, displayed_name, palette, width, height)
-		# processing.process_frames(variation_info, ascii_frames_path, frame_skipping, new_width_stretched, max_bytes_per_file, frames_to_update_stats)
+	print("\nProcessing:")
 
-processing.remove_url_files(temp_downloads_path)
+	ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
+	if not os.path.exists(ascii_frames_path):
+		os.mkdir(ascii_frames_path)
 
-# Print the time it took to run the program.
-time_elapsed = time.time() - t0
-minutes = floor(time_elapsed / 60)
-seconds = time_elapsed % 60
-print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds))
+	for file_info in files_info:
+		url_name = file_info["url_name"]
+		extension = file_info["extension"]
+		url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
+		for variation in file_info["variations"]:
+			info = {
+				"ascii_frames_path": ascii_frames_path,
+				"url_file_path": url_file_path,
+				"url_name": url_name,
+				"extension": extension,
+				"id": variation["id"],
+				"displayed_name": variation["displayed_name"],
+				"palette": variation["palette"],
+				"width": variation["width"],
+				"height": variation["height"],
+				"frame_skipping": frame_skipping,
+				"new_width_stretched": new_width_stretched,
+				"max_bytes_per_file": max_bytes_per_file,
+				"frames_to_update_stats": frames_to_update_stats
+			}
+			processing.process_frames(info)
 
-# sys.stdout.write("\033[F") # Cursor up one line
-# sys.stdout.write("\033[K") # Clear to the end of line
-# print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds), end="\r", flush=True)
+	processing.remove_url_files(temp_downloads_path)
+
+	# Print the time it took to run the program.
+	time_elapsed = time.time() - t0
+	minutes = floor(time_elapsed / 60)
+	seconds = time_elapsed % 60
+	print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds))
+	# sys.stdout.write("\033[F") # Cursor up one line
+	# sys.stdout.write("\033[K") # Clear to the end of line
+	# print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds), end="\r", flush=True)
+except Exception as e:
+	raise e

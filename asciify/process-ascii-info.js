@@ -71,6 +71,9 @@ function renderAscii(entries) {
 	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));
 
 	// Prints whatever Python has attempted to print
+	sensor.stderr.on("data", (data) => {
+		console.error(`stderr: ${data}`);
+	});
 	sensor.stdout.on("data", function (buffer) {
 		console.log(buffer.toString());
 	});
