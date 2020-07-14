@@ -25,7 +25,6 @@ async function dbInsertVariation(variation) {
 }
 
 async function dbAddVariations(entries) {
-	let variations = [];
 	for (const entry of entries) {
 		for (const variation of entry.variations) {
 			const variationInfo = {
@@ -36,20 +35,19 @@ async function dbAddVariations(entries) {
 				"palette": variation.palette,
 				"width": variation.width,
 				"height": variation.height,
-			}
-			variationInfo.id = await dbInsertVariation(variationInfo);
-			variations.push(variationInfo);
+			};
+			variation.id = await dbInsertVariation(variationInfo);
 		}
 	}
-	return variations;
+	return entries;
 }
 
 app.post("/add", async (request, response) => {
 	const info = repairMangledInfo(request.body);
 	const format = checkInfoFormat(info);
 	if (format === true) {
-		const variations = await dbAddVariations(info.entries);
-		renderAscii(variations);
+		const entriesWithVariationIDs = await dbAddVariations(info.entries);
+		renderAscii(entriesWithVariationIDs);
 	} else {
 		createError(format);
 	}
@@ -80,17 +78,16 @@ const db = new Datastore({
 	filename: "ascii-info.db", autoload: true
 });
 
-function renderAscii(variations) {
-	console.log(JSON.stringify(variations, undefined, 2));
-	// const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(variations)));
-
-	// // Prints whatever Python has attempted to print
-	// sensor.stderr.on("data", (data) => {
-	// 	console.error(`stderr: ${data}`);
-	// });
-	// sensor.stdout.on("data", function (buffer) {
-	// 	console.log(buffer.toString());
-	// });
+function renderAscii(entries) {
+	// console.log(JSON.stringify(entries, undefined, 2));
+	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));
+	// Prints whatever Python has attempted to print
+	sensor.stderr.on("data", (data) => {
+		console.error(`stderr: ${data}`);
+	});
+	sensor.stdout.on("data", function (buffer) {
+		console.log(buffer.toString());
+	});
 }
 
 function createError(err) {

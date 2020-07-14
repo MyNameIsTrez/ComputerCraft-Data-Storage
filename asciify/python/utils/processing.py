@@ -32,13 +32,13 @@ def remove_url_files(temp_downloads_path):
 
 def process_frames(info):
 	if info["extension"] == "mp4":
-		info["video"] = cv2.VideoCapture(url_file_path)
+		info["video"] = cv2.VideoCapture(info["url_file_path"])
 		info["old_image"] = None
 	else:
 		info["video"] = None
-		info["old_image"] = Image.open(url_file_path)
+		info["old_image"] = Image.open(info["url_file_path"])
 
-	info["new_width"] = get_new_width(info, video, old_image)
+	info["new_width"] = get_new_width(info)
 
 	# Create a folder for storing the ASCII frames for this variation.
 	info["ascii_frames_variation_path"] = os.path.join(info["ascii_frames_path"], info["id"])
@@ -54,10 +54,10 @@ def process_frames(info):
 	else:
 		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
 
-	output_info_file = create_output_file(output_folder_name, "info")
-	string = "{frame_count=" + str(info["used_frame_count"]) + ",width=" + str(info["new_width"]) + ",height=" + str(info["height"]) + ",data_files=" + str(info["data_frames_count"]) + "}"
-	output_info_file.write(string)
-	output_info_file.close()
+	# output_info_file = create_output_file(output_folder_name, "info")
+	# string = "{frame_count=" + str(info["used_frame_count"]) + ",width=" + str(info["new_width"]) + ",height=" + str(info["height"]) + ",data_files=" + str(info["data_frames_count"]) + "}"
+	# output_info_file.write(string)
+	# output_info_file.close()
 	print()
 
 
@@ -155,6 +155,7 @@ def process_gif_frames(info):
 def process_image_frame(info):
 	info["used_frame_count"] = 1
 	info["new_frame_count"] = 1
+	info["file_byte_count"] = 0
 	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
 	info["data_frames_count"] = 1
 	info["start_time"] = time.time()
@@ -165,7 +166,7 @@ def process_image_frame(info):
 	# frame = old_image.resize((new_width - 1, info["height"]), Image.BICUBIC)
 	# frame = frame.convert("RGB")
 	info["get_frame_time"] = time.time() - info["start_frame_time"]
-	process_frame(new_image, used_frame_count, new_width, new_height, output_file, 1, start_frame_time, get_frame_time, palette, frames_to_update_stats, start_anim_processing_time, name)
+	info = process_frame(info)
 	info["output_file"].close()
 	return info
 
@@ -194,7 +195,7 @@ def process_frame(info):
 	for y in range(info["height"]):
 		for x in range(modified_width):
 			# TODO: Let NP access the frame_pixels array directly, instead of looping through each pixel manually!
-			string += char.get_char(frame_pixels[x, y], palette)
+			string += char.get_char(frame_pixels[x, y], info["palette"])
 
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
@@ -220,10 +221,10 @@ def process_frame(info):
 	info["looping_time"] = looping_end_time - looping_start_time
 	info["writing_time"] = writing_end_time - writing_start_time
 
-	if info["used_frame_count"] % frames_to_update_stats == 0 or info["used_frame_count"] == info["new_frame_count"]:
+	if info["used_frame_count"] % info["frames_to_update_stats"] == 0 or info["used_frame_count"] == info["new_frame_count"]:
 		print_stats(info)
 
-	info["string_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
+	info["file_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
 
 	return info
 
