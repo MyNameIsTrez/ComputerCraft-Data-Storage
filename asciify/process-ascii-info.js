@@ -15,28 +15,41 @@ app.listen(3000, "0.0.0.0", () => {
 // so the content-type of those is always 'application/x-www-form-urlencoded'.
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const dbInsert = entry => {
+async function dbInsertVariation(variation) {
 	return new Promise(function (resolve, reject) {
-		db.insert(entry, (err, inserted) => {
+		db.insert(variation, (err, inserted) => {
 			if (err) reject(err);
 			else resolve(inserted._id);
 		});
 	});
 }
 
-const addIDsAndRender = async entries => {
-	const promises = entries.map(async entry => {
-		entry.id = await dbInsert(entry);
-	})
-	await Promise.all(promises);
-	renderAscii(entries);
+async function dbAddVariations(entries) {
+	let variations = [];
+	for (const entry of entries) {
+		for (const variation of entry.variations) {
+			const variationInfo = {
+				"url": entry.url,
+				"url_name": entry.url_name,
+				"extension": entry.extension,
+				"displayed_name": variation.displayed_name,
+				"palette": variation.palette,
+				"width": variation.width,
+				"height": variation.height,
+			}
+			variationInfo.id = await dbInsertVariation(variationInfo);
+			variations.push(variationInfo);
+		}
+	}
+	return variations;
 }
 
-app.post("/add", (request, response) => {
+app.post("/add", async (request, response) => {
 	const info = repairMangledInfo(request.body);
 	const format = checkInfoFormat(info);
 	if (format === true) {
-		addIDsAndRender(info.entries);
+		const variations = await dbAddVariations(info.entries);
+		renderAscii(variations);
 	} else {
 		createError(format);
 	}
@@ -67,16 +80,17 @@ const db = new Datastore({
 	filename: "ascii-info.db", autoload: true
 });
 
-function renderAscii(entries) {
-	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));
+function renderAscii(variations) {
+	console.log(JSON.stringify(variations, undefined, 2));
+	// const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(variations)));
 
-	// Prints whatever Python has attempted to print
-	sensor.stderr.on("data", (data) => {
-		console.error(`stderr: ${data}`);
-	});
-	sensor.stdout.on("data", function (buffer) {
-		console.log(buffer.toString());
-	});
+	// // Prints whatever Python has attempted to print
+	// sensor.stderr.on("data", (data) => {
+	// 	console.error(`stderr: ${data}`);
+	// });
+	// sensor.stdout.on("data", function (buffer) {
+	// 	console.log(buffer.toString());
+	// });
 }
 
 function createError(err) {
