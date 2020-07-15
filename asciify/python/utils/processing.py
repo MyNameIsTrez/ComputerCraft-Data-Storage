@@ -14,7 +14,7 @@ def download_url_files(entries, temp_downloads_path):
 		os.mkdir(temp_downloads_path)
 	for entry in entries:
 		filename = entry["url_name"]
-		print("    '" + filename + "'")
+		print("\t'" + filename + "'")
 		r = requests.get(entry["url"], stream=True)
 		file_path = os.path.join(temp_downloads_path, filename + "." + entry["extension"])
 		with open(file_path, "wb") as f:
@@ -53,9 +53,7 @@ def process_frames(info):
 		info = process_image_frame(info)
 	else:
 		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
-
-	# string = "{frame_count=" + str(info["used_frame_count"]) + ",width=" + str(info["new_width"]) + ",height=" + str(info["height"]) + ",frame_files_count=" + str(info["frame_files_count"]) + "}"
-	print()
+	print() # TODO: refactor this away
 
 	return {
 		"frame_files_count": info["frame_files_count"],
@@ -266,6 +264,8 @@ def print_stats(info):
 		time_passed_str = " | ??:??:?? passed"
 	speed = " | speed: {} frames/s".format(processed_fps)
 
+	# TODO: remove all variables mentioned in this block of commented code from this entire file
+
 	# # speed of getting the frame
 	# if info["get_frame_time"] > 0:
 	# 	processed_fps = floor(1 / info["get_frame_time"])
@@ -315,13 +315,4 @@ def print_stats(info):
 	else:
 		eta = " | ??:??:?? left"
 
-	# clears the line that will be printed on of any straggling characters
-	tab = "    "
-
-	print(tab + file_name_str + progress + speed + eta + time_passed_str + tab, end="\r", flush=True)
-
-	# sys.stdout.write("\033[F") # Cursor up one line
-	# sys.stdout.write("\033[K") # Clear to the end of line
-
-	# print(tab + progress + speed + eta, end="\r", flush=True)
-	# print(tab + progress + speed + speed_2 + speed_3 + speed_4 + speed_5 + eta, end="\r", flush=True)
+	print("\t" + file_name_str + progress + speed + eta + time_passed_str + "\t", end="\r", flush=True)

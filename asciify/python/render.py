@@ -58,7 +58,7 @@ def main():
 		if not os.path.exists(ascii_frames_path):
 			os.mkdir(ascii_frames_path)
 
-		additional_variations_info = {}
+		extra_variations_info = {}
 		for entry in entries:
 			url_name = entry["url_name"]
 			extension = entry["extension"]
@@ -79,7 +79,7 @@ def main():
 					"max_bytes_per_file": max_bytes_per_file,
 					"frames_to_update_stats": frames_to_update_stats
 				}
-				additional_variations_info[variation["id"]] = processing.process_frames(info)
+				extra_variations_info[variation["id"]] = processing.process_frames(info)
 
 		processing.remove_url_files(temp_downloads_path)
 
@@ -88,11 +88,11 @@ def main():
 		minutes = floor(time_elapsed / 60)
 		seconds = floor(time_elapsed % 60)
 		# TODO: The reason I don't just print the duration, instead of passing it to Node.js,
-		# is because when I print additional_variations_info and the duration information after each other,
+		# is because when I print extra_variations_info and the duration information after each other,
 		# they get concatenated at Node.js' side for some reason.
 		# time.sleep() or sys.stdout.write don't seem to fix this.
 		print(str({
-			"additional_variations_info": additional_variations_info,
+			"extra_variations_info": extra_variations_info,
 			"duration": {
 				"minutes": minutes,
 				"seconds": seconds

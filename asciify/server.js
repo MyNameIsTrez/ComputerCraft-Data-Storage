@@ -15,32 +15,9 @@ app.listen(3000, "0.0.0.0", () => {
 // so the content-type of those is always 'application/x-www-form-urlencoded'.
 app.use(bodyParser.urlencoded({ extended: true }));
 
-async function dbInsertVariation(variation) {
-	return new Promise(function (resolve, reject) {
-		db.insert(variation, (err, inserted) => {
-			if (err) reject(err);
-			else resolve(inserted._id);
-		});
-	});
-}
-
-async function dbAddVariations(entries) {
-	for (const entry of entries) {
-		for (const variation of entry.variations) {
-			const variationInfo = {
-				"url": entry.url,
-				"url_name": entry.url_name,
-				"extension": entry.extension,
-				"displayed_name": variation.displayed_name,
-				"palette": variation.palette,
-				"width": variation.width,
-				"height": variation.height,
-			};
-			variation.id = await dbInsertVariation(variationInfo);
-		}
-	}
-	return entries; // TODO: Can this line be removed?
-}
+const db = new Datastore({
+	filename: "ascii-info.db", autoload: true
+});
 
 app.post("/add", async (request, response) => {
 	const info = repairMangledInfo(request.body);
@@ -74,9 +51,32 @@ function checkInfoFormat(info) {
 	return true;
 }
 
-const db = new Datastore({
-	filename: "ascii-info.db", autoload: true
-});
+async function dbAddVariations(entries) {
+	for (const entry of entries) {
+		for (const variation of entry.variations) {
+			const variationInfo = {
+				"url": entry.url,
+				"url_name": entry.url_name,
+				"extension": entry.extension,
+				"displayed_name": variation.displayed_name,
+				"palette": variation.palette,
+				"width": variation.width,
+				"height": variation.height,
+			};
+			variation.id = await dbInsertVariation(variationInfo);
+		}
+	}
+	return entries; // TODO: Can this line be removed?
+}
+
+async function dbInsertVariation(variation) {
+	return new Promise(function (resolve, reject) {
+		db.insert(variation, (err, inserted) => {
+			if (err) reject(err);
+			else resolve(inserted._id);
+		});
+	});
+}
 
 function renderAscii(entries) {
 	// console.log(JSON.stringify(entries, undefined, 2));
@@ -92,15 +92,22 @@ function renderAscii(entries) {
 		try {
 			// Keys of objects get printed with ' instead of ", which JSON.parse doesn't like.
 			const obj = JSON.parse(str.replace(/'/g, '"'));
-			console.log(`\nDone! Duration: ${obj.duration.minutes} minutes, ${obj.duration.seconds} seconds.`);
-			// console.log(obj.additional_variations_info);
-			// dbAppendInfo(additionalVariationsInfo);
+			console.log(`\nDone:\n\t${obj.duration.minutes} minutes\n\t${obj.duration.seconds} seconds`);
+			dbAppendInfo(obj.extra_variations_info);
 		} catch (error) {
 			console.log(str);
 		}
 	});
 	py.stdin.write(JSON.stringify(entries));
 	py.stdin.end();
+}
+
+function dbAppendInfo(extraVariationsInfo) {
+	for (const [id, info] of Object.entries(extraVariationsInfo)) {
+		db.update({ _id: id }, {
+			$set: { "frame_files_count": info.frame_files_count, "used_frame_count": info.used_frame_count }
+		}, {}, function () { });
+	}
 }
 
 function createError(err) {
