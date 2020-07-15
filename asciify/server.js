@@ -92,7 +92,12 @@ function renderAscii(entries) {
 		try {
 			// Keys of objects get printed with ' instead of ", which JSON.parse doesn't like.
 			const obj = JSON.parse(str.replace(/'/g, '"'));
-			console.log(`\nDone:\n\t${obj.duration.minutes} minutes\n\t${obj.duration.seconds} seconds`);
+
+			// 0 seconds, 1 second, 2 seconds
+			const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
+			const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
+			console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
+
 			dbAppendInfo(obj.extra_variations_info);
 		} catch (error) {
 			console.log(str);
@@ -105,7 +110,7 @@ function renderAscii(entries) {
 function dbAppendInfo(extraVariationsInfo) {
 	for (const [id, info] of Object.entries(extraVariationsInfo)) {
 		db.update({ _id: id }, {
-			$set: { "frame_files_count": info.frame_files_count, "used_frame_count": info.used_frame_count }
+			$set: { "frame_files_count": info.frame_files_count, "frame_count": info.frame_count }
 		}, {}, function () { });
 	}
 }
@@ -115,3 +120,16 @@ function createError(err) {
 	// for the purpose of seeing what the reason was that this function has rejected its sent info.
 	console.log(err);
 }
+
+// app.post("/add", async (request, response) => {
+// 	const info = repairMangledInfo(request.body);
+// 	const format = checkInfoFormat(info);
+// 	if (format === true) {
+// 		const entriesWithVariationIDs = await dbAddVariations(info.entries);
+// 		renderAscii(entriesWithVariationIDs);
+// 	} else {
+// 		createError(format);
+// 	}
+// 	// ComputerCraft v1.33 doesn't feature http.post returning anything, so don't bother replying back.
+// 	response.end();
+// });

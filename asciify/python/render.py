@@ -48,11 +48,9 @@ def main():
 
 		t0 = time.time()
 
-		print("\nDownloading URL files:")
+		print("\nDownloading URL files", end="\r", flush=True)
 		temp_downloads_path = os.path.join(current_path, "temp downloads")
 		processing.download_url_files(entries, temp_downloads_path)
-
-		print("\nProcessing:")
 
 		ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
 		if not os.path.exists(ascii_frames_path):
@@ -64,13 +62,14 @@ def main():
 			extension = entry["extension"]
 			url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
 			for variation in entry["variations"]:
+				displayed_name_in_quotes = "'{}'".format(variation["displayed_name"])
 				info = {
 					"ascii_frames_path": ascii_frames_path,
 					"url_file_path": url_file_path,
 					"url_name": url_name,
 					"extension": extension,
 					"id": variation["id"],
-					"displayed_name": variation["displayed_name"],
+					"displayed_name_in_quotes": displayed_name_in_quotes,
 					"palette": variation["palette"],
 					"width": variation["width"],
 					"height": variation["height"],
@@ -79,6 +78,7 @@ def main():
 					"max_bytes_per_file": max_bytes_per_file,
 					"frames_to_update_stats": frames_to_update_stats
 				}
+				# print("\nProcessing {}".format(displayed_name_in_quotes), end="\r", flush=True)
 				extra_variations_info[variation["id"]] = processing.process_frames(info)
 
 		processing.remove_url_files(temp_downloads_path)
@@ -87,18 +87,18 @@ def main():
 		time_elapsed = time.time() - t0
 		minutes = floor(time_elapsed / 60)
 		seconds = floor(time_elapsed % 60)
-		# TODO: The reason I don't just print the duration, instead of passing it to Node.js,
-		# is because when I print extra_variations_info and the duration information after each other,
+		# TODO: The reason I don't just print the elapsed time, instead of passing it to Node.js,
+		# is because when I print extra_variations_info and the elapsed time information after each other,
 		# they get concatenated at Node.js' side for some reason.
 		# time.sleep() or sys.stdout.write don't seem to fix this.
 		print(str({
 			"extra_variations_info": extra_variations_info,
-			"duration": {
+			"elapsed": {
 				"minutes": minutes,
 				"seconds": seconds
 			}
 		}))
-		# print("\nDone! Duration: {}m, {}s".format(minutes, seconds))
+		# print("\nDone! {} minutes and {} seconds".format(minutes, seconds))
 	except Exception as e:
 		# Python child processes can't print to the terminal, so this will get Node.js to print any Python errors
 		raise e

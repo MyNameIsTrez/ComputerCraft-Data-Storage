@@ -14,7 +14,7 @@ def download_url_files(entries, temp_downloads_path):
 		os.mkdir(temp_downloads_path)
 	for entry in entries:
 		filename = entry["url_name"]
-		print("\t'" + filename + "'")
+		print("\t'" + filename + "'", end="\r", flush=True)
 		r = requests.get(entry["url"], stream=True)
 		file_path = os.path.join(temp_downloads_path, filename + "." + entry["extension"])
 		with open(file_path, "wb") as f:
@@ -31,6 +31,9 @@ def remove_url_files(temp_downloads_path):
 
 
 def process_frames(info):
+	processing_str = ' processing {}'.format(info["displayed_name_in_quotes"])
+	print('\nStarting{}'.format(processing_str), end="\r", flush=True)
+
 	if info["extension"] == "mp4":
 		info["video"] = cv2.VideoCapture(info["url_file_path"])
 		info["old_image"] = None
@@ -45,6 +48,9 @@ def process_frames(info):
 	if not os.path.exists(info["ascii_frames_variation_path"]):
 		os.mkdir(info["ascii_frames_variation_path"])
 
+	info["frame_count"] = 0
+	info["i"] = 0
+
 	if info["extension"] == "mp4":
 		info = process_mp4_frames(info)
 	elif info["extension"] == "gif":
@@ -52,12 +58,13 @@ def process_frames(info):
 	elif info["extension"] == "jpeg" or info["extension"] == "png" or info["extension"] == "jpg":
 		info = process_image_frame(info)
 	else:
-		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
-	print() # TODO: refactor this away
+		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.", end="\r", flush=True)
+	
+	print('Finished{}'.format(processing_str), end="\r", flush=True)
 
 	return {
 		"frame_files_count": info["frame_files_count"],
-		"used_frame_count": info["used_frame_count"]
+		"frame_count": info["frame_count"]
 	}
 
 
@@ -72,9 +79,9 @@ def get_new_width(info):
 			old_width = info["old_image"].size[0]
 			old_height = info["old_image"].size[1]
 		except IOError:
-			print("Can't load!")
+			print("Can't load!", end="\r", flush=True)
 	else:
-		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
+		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!", end="\r", flush=True)
 
 	if info["new_width_stretched"]:
 		return info["width"]
@@ -98,10 +105,8 @@ def try_create_new_output_file(info):
 
 
 def process_mp4_frames(info):
-	i = 0
-	info["used_frame_count"] = 0
 	actual_frame_count = int(info["video"].get(cv2.CAP_PROP_FRAME_COUNT))
-	info["new_frame_count"] = floor(actual_frame_count / info["frame_skipping"])
+	info["final_frame_count"] = floor(actual_frame_count / info["frame_skipping"])
 	info["file_byte_count"] = 0
 	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
 	info["frame_files_count"] = 2
@@ -110,15 +115,15 @@ def process_mp4_frames(info):
 		info["start_frame_time"] = time.time()
 		has_frames, cv2_frame = info["video"].read()
 		if has_frames:
-			if i % info["frame_skipping"] == 0:
-				info["used_frame_count"] += 1
+			if info["i"] % info["frame_skipping"] == 0:
+				info["frame_count"] += 1
 				info = try_create_new_output_file(info)
 				# cv2_frame = cv2.cvtColor(cv2_frame, cv2.COLOR_BGR2RGB)
 				cv2_frame = cv2.resize(cv2_frame, (info["new_width"] - 1, info["height"]))
 				info["frame"] = Image.fromarray(cv2_frame)  # pil pixels can be read faster than cv2 pixels, according to my tests
 				info["get_frame_time"] = time.time() - info["start_frame_time"]
 				info = process_frame(info)
-			i += 1
+			info["i"] += 1
 		else:
 			info["video"].release()
 			info["output_file"].close()
@@ -127,9 +132,7 @@ def process_mp4_frames(info):
 
 
 def process_gif_frames(info):
-	i = 0
-	info["used_frame_count"] = 0
-	info["new_frame_count"] = None
+	info["final_frame_count"] = None
 	info["file_byte_count"] = 0
 	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
 	info["frame_files_count"] = 2
@@ -137,14 +140,14 @@ def process_gif_frames(info):
 	try:
 		while True:
 			info["start_frame_time"] = time.time()
-			if i % info["frame_skipping"] == 0:
-				info["used_frame_count"] += 1
+			if info["i"] % info["frame_skipping"] == 0:
+				info["frame_count"] += 1
 				info = try_create_new_output_file(info)
 				info["frame"] = info["old_image"].resize((info["new_width"] - 1, info["height"]), Image.ANTIALIAS)
 				info["get_frame_time"] = time.time() - info["start_frame_time"]
 				info = process_frame(info)
 				info["old_image"].seek(info["old_image"].tell() + 1)  # gets the next frame
-			i += 1
+			info["i"] += 1
 	except:
 		# this part gets reached when the code tries to find the next frame, while it has reached the end of the gif
 		info["output_file"].close()
@@ -153,8 +156,8 @@ def process_gif_frames(info):
 
 
 def process_image_frame(info):
-	info["used_frame_count"] = 1
-	info["new_frame_count"] = 1
+	info["frame_count"] += 1
+	info["final_frame_count"] = 1
 	info["file_byte_count"] = 0
 	info["output_file"] = create_output_file(info["ascii_frames_variation_path"], 1)
 	info["frame_files_count"] = 1
@@ -172,7 +175,7 @@ def process_image_frame(info):
 
 
 def process_frame(info):
-	preparing_loop_start_time = time.time()
+	prepare_loop_start_time = time.time()
 
 	# not sure if it is necessary to convert the frame into RGBA!
 	# load the pixels of the frame
@@ -187,10 +190,10 @@ def process_frame(info):
 	# this should ideally be done at the resizing of the frame stage instead!
 	modified_width = info["new_width"] - 1
 
-	preparing_loop_end_time = time.time()
+	prepare_loop_end_time = time.time()
 
 	# measure the time it takes for the coming "for y, for x" loop to execute
-	looping_start_time = time.time()
+	pixel_loop_start_time = time.time()
 
 	for y in range(info["height"]):
 		for x in range(modified_width):
@@ -203,25 +206,25 @@ def process_frame(info):
 			# so ComputerCraft can draw the entire frame with one write() statement
 			string += "\\n"
 
-	looping_end_time = time.time()
+	pixel_loop_end_time = time.time()
 
-	writing_start_time = time.time()
+	write_start_time = time.time()
 
 	# gives each frame its own line in the outputted file, so lines can easily be found and parsed
-	if info["used_frame_count"] > 1:
+	if info["frame_count"] > 1:
 		final_string = string
 	else:
 		final_string = "\n" + string
 
 	info["output_file"].write(final_string)
 
-	writing_end_time = time.time()
+	write_end_time = time.time()
 
-	info["preparing_loop_time"] = preparing_loop_end_time - preparing_loop_start_time
-	info["looping_time"] = looping_end_time - looping_start_time
-	info["writing_time"] = writing_end_time - writing_start_time
+	info["prepare_loop_time"] = prepare_loop_end_time - prepare_loop_start_time
+	info["pixel_loop_time"] = pixel_loop_end_time - pixel_loop_start_time
+	info["write_time"] = write_end_time - write_start_time
 
-	if info["used_frame_count"] % info["frames_to_update_stats"] == 0 or info["used_frame_count"] == info["new_frame_count"]:
+	if info["frame_count"] % info["frames_to_update_stats"] == 0 or info["frame_count"] == info["final_frame_count"]:
 		print_stats(info)
 
 	info["file_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
@@ -230,20 +233,35 @@ def process_frame(info):
 
 
 def print_stats(info):
-	file_name_str = "'" + info["displayed_name"] + "'"
-
 	# progress
-	progress = " | frame " + str(info["used_frame_count"]) + "/"
-	if info["new_frame_count"]:
-		progress = progress + str(info["new_frame_count"])
+	progress = "frame " + str(info["frame_count"]) + "/"
+	if info["final_frame_count"]:
+		progress = progress + str(info["final_frame_count"])
 	else:
 		progress = progress + "?"
 
-	# speed of processing the frame
 	elapsed = time.time() - info["start_frame_time"]
-	if elapsed > 0:
-		processed_fps = floor(1 / elapsed)
 
+	# eta
+	if info["final_frame_count"]:
+		frames_left = info["final_frame_count"] - info["frame_count"]
+		seconds_left = elapsed * frames_left
+
+		eta_hours   = floor(seconds_left / 3600)
+		eta_minutes = floor(seconds_left / 60) % 60
+		eta_seconds = floor(seconds_left) % 60
+
+		# makes sure each value is always 2 characters wide when printed
+		eta_hours =   ("0" if eta_hours   < 10 else "") + str(eta_hours)
+		eta_minutes = ("0" if eta_minutes < 10 else "") + str(eta_minutes)
+		eta_seconds = ("0" if eta_seconds < 10 else "") + str(eta_seconds)
+
+		eta = "{}:{}:{} left".format(eta_hours, eta_minutes, eta_seconds)
+	else:
+		eta = "??:??:?? left"
+
+	# time_passed_str
+	if elapsed > 0:
 		time_spent = time.time() - info["start_time"]
 
 		spent_hours = floor(time_spent / 3600)
@@ -258,61 +276,15 @@ def print_stats(info):
 		if spent_seconds < 10:
 			spent_seconds = "0" + str(spent_seconds)
 		
-		time_passed_str = " | {}:{}:{} passed".format(spent_hours, spent_minutes, spent_seconds)
+		time_passed_str = "{}:{}:{} passed".format(spent_hours, spent_minutes, spent_seconds)
 	else:
-		processed_fps = "1000+"
-		time_passed_str = " | ??:??:?? passed"
-	speed = " | speed: {} frames/s".format(processed_fps)
+		time_passed_str = "??:??:?? passed"
 
-	# TODO: remove all variables mentioned in this block of commented code from this entire file
+	speed_frames_processed = "speed: {} frames/s".format(       floor(1 / elapsed)                   if elapsed > 0                   else "1000+")
+	speed_get_frame        = "get frame: {} frames/s".format(   floor(1 / info["get_frame_time"])    if info["get_frame_time"] > 0    else "1000+")
+	speed_prepare_loop     = "prepare loop: {} frames/s".format(floor(1 / info["prepare_loop_time"]) if info["prepare_loop_time"] > 0 else "1000+")
+	speed_pixel_loop       = "pixel loop: {} frames/s".format(  floor(1 / info["pixel_loop_time"])   if info["pixel_loop_time"] > 0   else "1000+")
+	speed_write            = "write: {} frames/s".format(       floor(1 / info["write_time"])        if info["write_time"] > 0        else "1000+")
 
-	# # speed of getting the frame
-	# if info["get_frame_time"] > 0:
-	# 	processed_fps = floor(1 / info["get_frame_time"])
-	# else:
-	# 	processed_fps = "1000+"
-	# speed_2 = ", get frame: {} frames/s".format(processed_fps)
-
-	# # preparing for the "for y, for x" loop
-	# if info["preparing_loop_time"] > 0:
-	# 	processed_fps = floor(1 / info["preparing_loop_time"])
-	# else:
-	# 	processed_fps = "1000+"
-	# speed_3 = ", preparing loop: {} frames/s".format(processed_fps)
-
-	# # speed of the "for y, for x" loop
-	# if info["looping_time"] > 0:
-	# 	processed_fps = floor(1 / info["looping_time"])
-	# else:
-	# 	processed_fps = "1000+"
-	# speed_4 = ", pixel loop: {} frames/s".format(processed_fps)
-
-	# # writing speed
-	# if info["writing_time"] > 0:
-	# 	processed_fps = floor(1 / info["writing_time"])
-	# else:
-	# 	processed_fps = "1000+"
-	# speed_5 = ", writing: {} frames/s".format(processed_fps)
-
-	# calculate how long it should take for the program to finish
-	if info["new_frame_count"]:
-		frames_left = info["new_frame_count"] - info["used_frame_count"]
-		seconds_left = elapsed * frames_left
-
-		eta_hours = floor(seconds_left / 3600)
-		eta_minutes = floor(seconds_left / 60) % 60
-		eta_seconds = floor(seconds_left) % 60
-
-		# makes sure each value is always 2 characters wide when printed
-		if eta_hours < 10:
-			eta_hours = "0" + str(eta_hours)
-		if eta_minutes < 10:
-			eta_minutes = "0" + str(eta_minutes)
-		if eta_seconds < 10:
-			eta_seconds = "0" + str(eta_seconds)
-
-		eta = " | {}:{}:{} left".format(eta_hours, eta_minutes, eta_seconds)
-	else:
-		eta = " | ??:??:?? left"
-
-	print("\t" + file_name_str + progress + speed + eta + time_passed_str + "\t", end="\r", flush=True)
+	# print("\t" + file_name_str, progress, eta, time_passed_str, speed_frames_processed, sep=" | ", end="\r", flush=True)
+	print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, speed_get_frame, speed_prepare_loop, speed_pixel_loop, speed_write, sep=" | ", end="\r", flush=True)
