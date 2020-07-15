@@ -39,7 +39,7 @@ async function dbAddVariations(entries) {
 			variation.id = await dbInsertVariation(variationInfo);
 		}
 	}
-	return entries;
+	return entries; // TODO: Can this line be removed?
 }
 
 app.post("/add", async (request, response) => {
@@ -80,14 +80,27 @@ const db = new Datastore({
 
 function renderAscii(entries) {
 	// console.log(JSON.stringify(entries, undefined, 2));
-	const sensor = spawn("python", ["python/render.py"].concat(JSON.stringify(entries)));
+	const py = spawn("python", ["python/render.py"]);
 	// Prints whatever Python has attempted to print
-	sensor.stderr.on("data", (data) => {
+	py.stderr.on("data", (data) => {
 		console.error(`stderr: ${data}`);
 	});
-	sensor.stdout.on("data", function (buffer) {
-		console.log(buffer.toString());
+	py.stdout.on("data", (buffer) => {
+		const str = buffer.toString();
+		// Additional info is detected by being JSON.
+		// It would be better to send it on a separate channel instead.
+		try {
+			// Keys of objects get printed with ' instead of ", which JSON.parse doesn't like.
+			const obj = JSON.parse(str.replace(/'/g, '"'));
+			console.log(`\nDone! Duration: ${obj.duration.minutes} minutes, ${obj.duration.seconds} seconds.`);
+			// console.log(obj.additional_variations_info);
+			// dbAppendInfo(additionalVariationsInfo);
+		} catch (error) {
+			console.log(str);
+		}
 	});
+	py.stdin.write(JSON.stringify(entries));
+	py.stdin.end();
 }
 
 function createError(err) {

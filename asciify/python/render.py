@@ -26,7 +26,7 @@ new_width_stretched = True
 # 1 means every frame of the video is kept, 3 means every third frame of the video is kept
 frame_skipping = 1
 
-# 100 MB GitHub file limit. 9.5e7 is 95 million.
+# 100 MB GitHub file limit. 9.5e7 is 95 million
 max_bytes_per_file = 9.5e7
 
 # how many frames have to be processed before the stats in the console are updated
@@ -36,54 +36,72 @@ frames_to_update_stats = 1
 # EXECUTION OF THE PROGRAM #######################################
 
 
-try:
-	print(sys.argv)
-	files_info = json.loads(sys.argv[1])
-	# print(files_info, files_info[0]["id"])
+# read data from stdin
+def read_in():
+    lines = sys.stdin.readlines()
+    # since the input would only be having one line, parse the JSON data from that
+    return json.loads(lines[0])
 
-	t0 = time.time()
+def main():
+	try:
+		entries = read_in()
 
-	print("\nDownloading URL files:")
-	temp_downloads_path = os.path.join(current_path, "temp downloads")
-	processing.download_url_files(files_info, temp_downloads_path)
+		t0 = time.time()
 
-	print("\nProcessing:")
+		print("\nDownloading URL files:")
+		temp_downloads_path = os.path.join(current_path, "temp downloads")
+		processing.download_url_files(entries, temp_downloads_path)
 
-	ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
-	if not os.path.exists(ascii_frames_path):
-		os.mkdir(ascii_frames_path)
+		print("\nProcessing:")
 
-	for file_info in files_info:
-		url_name = file_info["url_name"]
-		extension = file_info["extension"]
-		url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
-		for variation in file_info["variations"]:
-			info = {
-				"ascii_frames_path": ascii_frames_path,
-				"url_file_path": url_file_path,
-				"url_name": url_name,
-				"extension": extension,
-				"id": variation["id"],
-				"displayed_name": variation["displayed_name"],
-				"palette": variation["palette"],
-				"width": variation["width"],
-				"height": variation["height"],
-				"frame_skipping": frame_skipping,
-				"new_width_stretched": new_width_stretched,
-				"max_bytes_per_file": max_bytes_per_file,
-				"frames_to_update_stats": frames_to_update_stats
+		ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
+		if not os.path.exists(ascii_frames_path):
+			os.mkdir(ascii_frames_path)
+
+		additional_variations_info = {}
+		for entry in entries:
+			url_name = entry["url_name"]
+			extension = entry["extension"]
+			url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
+			for variation in entry["variations"]:
+				info = {
+					"ascii_frames_path": ascii_frames_path,
+					"url_file_path": url_file_path,
+					"url_name": url_name,
+					"extension": extension,
+					"id": variation["id"],
+					"displayed_name": variation["displayed_name"],
+					"palette": variation["palette"],
+					"width": variation["width"],
+					"height": variation["height"],
+					"frame_skipping": frame_skipping,
+					"new_width_stretched": new_width_stretched,
+					"max_bytes_per_file": max_bytes_per_file,
+					"frames_to_update_stats": frames_to_update_stats
+				}
+				additional_variations_info[variation["id"]] = processing.process_frames(info)
+
+		processing.remove_url_files(temp_downloads_path)
+
+		# print the time it took to run the program
+		time_elapsed = time.time() - t0
+		minutes = floor(time_elapsed / 60)
+		seconds = floor(time_elapsed % 60)
+		# TODO: The reason I don't just print the duration, instead of passing it to Node.js,
+		# is because when I print additional_variations_info and the duration information after each other,
+		# they get concatenated at Node.js' side for some reason.
+		# time.sleep() or sys.stdout.write don't seem to fix this.
+		print(str({
+			"additional_variations_info": additional_variations_info,
+			"duration": {
+				"minutes": minutes,
+				"seconds": seconds
 			}
-			processing.process_frames(info)
+		}))
+		# print("\nDone! Duration: {}m, {}s".format(minutes, seconds))
+	except Exception as e:
+		# Python child processes can't print to the terminal, so this will get Node.js to print any Python errors
+		raise e
 
-	processing.remove_url_files(temp_downloads_path)
-
-	# Print the time it took to run the program.
-	time_elapsed = time.time() - t0
-	minutes = floor(time_elapsed / 60)
-	seconds = time_elapsed % 60
-	print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds))
-	# sys.stdout.write("\033[F") # Cursor up one line
-	# sys.stdout.write("\033[K") # Clear to the end of line
-	# print("Done! Duration: {}m, {:.2f}s".format(minutes, seconds), end="\r", flush=True)
-except Exception as e:
-	raise e
+if __name__ == '__main__':
+    main()
