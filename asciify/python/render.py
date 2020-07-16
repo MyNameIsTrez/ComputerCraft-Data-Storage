@@ -19,6 +19,9 @@ current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 # 4. when you want to go back to the default font,
 # 	 replace the new minecraft.jar file with 'minecraft.jar versions/old/minecraft.jar'
 
+# if true, print a minimal amount of live statistics for each file
+minimal_printing = True
+
 # if true, the original aspect ratio won't be kept so the width can be stretched to max_width
 new_width_stretched = True
 
@@ -56,6 +59,9 @@ def main():
 		if not os.path.exists(ascii_frames_path):
 			os.mkdir(ascii_frames_path)
 
+		if not minimal_printing:
+			print("\nProcessing", end="\r", flush=True)
+
 		extra_variations_info = {}
 		for entry in entries:
 			url_name = entry["url_name"]
@@ -73,6 +79,7 @@ def main():
 					"palette": variation["palette"],
 					"width": variation["width"],
 					"height": variation["height"],
+					"minimal_printing": minimal_printing,
 					"frame_skipping": frame_skipping,
 					"new_width_stretched": new_width_stretched,
 					"max_bytes_per_file": max_bytes_per_file,
