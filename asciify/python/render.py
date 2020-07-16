@@ -20,7 +20,7 @@ current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 # 	 replace the new minecraft.jar file with 'minecraft.jar versions/old/minecraft.jar'
 
 # if true, print a minimal amount of live statistics for each file
-minimal_printing = True
+minimal_printing = False
 
 # if true, the original aspect ratio won't be kept so the width can be stretched to max_width
 new_width_stretched = True
@@ -104,7 +104,7 @@ def main():
 				"minutes": minutes,
 				"seconds": seconds
 			}
-		}))
+		}), end="\r", flush=True)
 		# print("\nDone! {} minutes and {} seconds".format(minutes, seconds))
 	except Exception as e:
 		# Python child processes can't print to the terminal, so this will get Node.js to print any Python errors

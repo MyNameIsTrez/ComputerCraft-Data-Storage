@@ -289,6 +289,5 @@ def print_stats(info):
 	speed_pixel_loop       = "pixel loop: {} frames/s".format(  floor(1 / info["pixel_loop_time"])   if info["pixel_loop_time"] > 0   else "1000+")
 	speed_write            = "write: {} frames/s".format(       floor(1 / info["write_time"])        if info["write_time"] > 0        else "1000+")
 
-	# print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, sep=" | ", end="\r", flush=True)
-	if not info["minimal_printing"]:
-		print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, speed_get_frame, speed_prepare_loop, speed_pixel_loop, speed_write, sep=" | ", end="\r", flush=True)
+	# print("\t" + file_name_str, progress, eta, time_passed_str, speed_frames_processed, sep=" | ", end="\r", flush=True)
+	print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, speed_get_frame, speed_prepare_loop, speed_pixel_loop, speed_write, sep=" | ", end="\r", flush=True)
