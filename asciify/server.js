@@ -19,7 +19,7 @@ const db = new Datastore({
 	filename: "ascii-info.db", autoload: true
 })
 
-app.post("/add", async (req, res) => {
+app.post("/ascii-add", async (req, res) => {
 	const info = repairMangledInfo(req.body)
 	const format = checkInfoFormat(info)
 	if (format === true) {
@@ -92,8 +92,8 @@ function renderAscii(entries) {
 		// Important objects are sent through python's print(), other information is written to output.txt.
 		try {
 			dbAppendInfo(JSON.parse(input))
-		} catch (error) {
-			console.log(error)
+		} catch (err) {
+			console.log(err)
 			console.log(input)
 		}
 	})
@@ -116,6 +116,20 @@ function createError(err) {
 	console.log(err)
 }
 
-app.get("/get-ascii-info", async (req, res) => { db.find({}, function (err, docs) { res.send(docs) }) })
+app.get("/ascii-info", async (req, res) => { db.find({}, function (err, docs) { res.send(docs) }) })
 
-app.get("/get-output", (req, res) => res.download("output.txt"))
+app.get("/ascii-output", (req, res) => res.download("output.txt"))
+
+app.post("/ascii-file", (req, res) => {
+	const fileID = repairMangledInfo(req.body)
+	const path = `ascii-frames/ktFgVkXKqm21IF1f/${fileID}.txt`
+	fs.access(path, fs.F_OK, (err) => {
+		if (err) {
+			// File doesn't exist.
+			res.send("error")
+			return
+		}
+		// File exists.
+		res.download(path)
+	})
+})
