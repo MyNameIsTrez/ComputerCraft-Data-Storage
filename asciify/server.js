@@ -87,22 +87,18 @@ function renderAscii(entries) {
 	});
 	py.stdout.on("data", (buffer) => {
 		const input = buffer.toString();
-		// Additional info is detected by being JSON.
-		// It would be better to send it on a separate channel instead.
-		for (const str of input.split("\n")) {
-			try {
-				const obj = JSON.parse(str);
+		// Important objects are sent through python's print(), everything else is written to output.txt.
+		try {
+			const obj = JSON.parse(str);
 
-				// 0 seconds, 1 second, 2 seconds
-				const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
-				const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
-				console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
+			// 0 seconds, 1 second, 2 seconds
+			const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
+			const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
+			console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
 
-				dbAppendInfo(obj.extra_variations_info);
-			} catch (error) {
-				console.log(str);
-				// process.stdout.write(str);
-			}
+			dbAppendInfo(obj.extra_variations_info);
+		} catch (error) {
+			console.log(str);
 		}
 	});
 	py.stdin.write(JSON.stringify(entries));
