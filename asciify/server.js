@@ -81,26 +81,31 @@ async function dbInsertVariation(variation) {
 function renderAscii(entries) {
 	// console.log(JSON.stringify(entries, undefined, 2));
 	const py = spawn("python", ["python/render.py"]);
+
 	// Prints whatever Python has attempted to print
 	py.stderr.on("data", (data) => {
 		console.error(`stderr: ${data}`);
 	});
+
 	py.stdout.on("data", (buffer) => {
 		const input = buffer.toString();
 		// Important objects are sent through python's print(), everything else is written to output.txt.
-		try {
-			const obj = JSON.parse(str);
+		for (const str of input.split("\n")) {
+			try {
+				const obj = JSON.parse(str);
 
-			// 0 seconds, 1 second, 2 seconds
-			const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
-			const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
-			console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
+				// 0 seconds, 1 second, 2 seconds
+				const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
+				const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
+				console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
 
-			dbAppendInfo(obj.extra_variations_info);
-		} catch (error) {
-			console.log(str);
+				dbAppendInfo(obj.extra_variations_info);
+			} catch (error) {
+				console.log(str);
+			}
 		}
 	});
+
 	py.stdin.write(JSON.stringify(entries));
 	py.stdin.end();
 }
