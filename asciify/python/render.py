@@ -98,7 +98,7 @@ def main():
 		# is because when I print extra_variations_info and the elapsed time information after each other,
 		# they get concatenated at Node.js' side for some reason.
 		# time.sleep() or sys.stdout.write don't seem to fix this.
-		print(str({
+		print(json.dumps({
 			"extra_variations_info": extra_variations_info,
 			"elapsed": {
 				"minutes": minutes,
