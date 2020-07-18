@@ -5,5 +5,6 @@ asciify/ascii-frames
 asciify/example-js-to-py
 asciify/node_modules
 asciify/ascii-info.db
+asciify/output.txt
 extra/temp
 # asciify/python/utils/__pychache__

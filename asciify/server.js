@@ -19,8 +19,8 @@ const db = new Datastore({
 	filename: "ascii-info.db", autoload: true
 });
 
-app.post("/add", async (request, response) => {
-	const info = repairMangledInfo(request.body);
+app.post("/add", async (req, res) => {
+	const info = repairMangledInfo(req.body);
 	const format = checkInfoFormat(info);
 	if (format === true) {
 		const entriesWithVariationIDs = await dbAddVariations(info.entries);
@@ -29,7 +29,7 @@ app.post("/add", async (request, response) => {
 		createError(format);
 	}
 	// ComputerCraft v1.33 doesn't feature http.post returning anything, so don't bother replying back.
-	response.end();
+	res.end();
 });
 
 function repairMangledInfo(mangledInfo) {
@@ -116,15 +116,6 @@ function createError(err) {
 	console.log(err);
 }
 
-// app.get("/get", async (request, response) => {
-// 	const info = repairMangledInfo(request.body);
-// 	const format = checkInfoFormat(info);
-// 	if (format === true) {
-// 		const entriesWithVariationIDs = await dbAddVariations(info.entries);
-// 		renderAscii(entriesWithVariationIDs);
-// 	} else {
-// 		createError(format);
-// 	}
-// 	// ComputerCraft v1.33 doesn't feature http.post returning anything, so don't bother replying back.
-// 	response.end();
-// });
+app.get("/get-ascii-info", async (req, res) => { db.find({}, function (err, docs) { res.send(docs); }); });
+
+app.get('/get-output', (req, res) => res.download('output.txt'))
