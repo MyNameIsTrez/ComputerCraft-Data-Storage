@@ -3,6 +3,7 @@ from math import floor
 
 # From the utils folder
 import utils.processing as processing
+import utils.outputting as outputting
 
 
 current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -46,69 +47,61 @@ def read_in():
     return json.loads(lines[0])
 
 def main():
-	try:
-		entries = read_in()
+	with open('output.txt', 'w') as f:
+		try:
+			entries = read_in()
 
-		t0 = time.time()
+			t0 = time.time()
 
-		print("\nDownloading URL files", end="\r", flush=True)
-		temp_downloads_path = os.path.join(current_path, "temp downloads")
-		processing.download_url_files(entries, temp_downloads_path)
+			outputting.output(f, "Downloading URL files")
+			temp_downloads_path = os.path.join(current_path, "temp downloads")
+			processing.download_url_files(entries, temp_downloads_path, f)
 
-		ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
-		if not os.path.exists(ascii_frames_path):
-			os.mkdir(ascii_frames_path)
+			ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
+			if not os.path.exists(ascii_frames_path):
+				os.mkdir(ascii_frames_path)
 
-		if not minimal_printing:
-			print("\nProcessing", end="\r", flush=True)
+			if not minimal_printing:
+				outputting.output(f, "Processing")
 
-		extra_variations_info = {}
-		for entry in entries:
-			url_name = entry["url_name"]
-			extension = entry["extension"]
-			url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
-			for variation in entry["variations"]:
-				displayed_name_in_quotes = "'{}'".format(variation["displayed_name"])
-				info = {
-					"ascii_frames_path": ascii_frames_path,
-					"url_file_path": url_file_path,
-					"url_name": url_name,
-					"extension": extension,
-					"id": variation["id"],
-					"displayed_name_in_quotes": displayed_name_in_quotes,
-					"palette": variation["palette"],
-					"width": variation["width"],
-					"height": variation["height"],
-					"minimal_printing": minimal_printing,
-					"frame_skipping": frame_skipping,
-					"new_width_stretched": new_width_stretched,
-					"max_bytes_per_file": max_bytes_per_file,
-					"frames_to_update_stats": frames_to_update_stats
-				}
-				# print("\nProcessing {}".format(displayed_name_in_quotes), end="\r", flush=True)
-				extra_variations_info[variation["id"]] = processing.process_frames(info)
+			extra_variations_info = {}
+			for entry in entries:
+				url_name = entry["url_name"]
+				extension = entry["extension"]
+				url_file_path = os.path.join(temp_downloads_path, url_name + "." + extension)
+				for variation in entry["variations"]:
+					displayed_name_in_quotes = "'{}'".format(variation["displayed_name"])
+					info = {
+						"f": f,
+						"ascii_frames_path": ascii_frames_path,
+						"url_file_path": url_file_path,
+						"url_name": url_name,
+						"extension": extension,
+						"id": variation["id"],
+						"displayed_name_in_quotes": displayed_name_in_quotes,
+						"palette": variation["palette"],
+						"width": variation["width"],
+						"height": variation["height"],
+						"minimal_printing": minimal_printing,
+						"frame_skipping": frame_skipping,
+						"new_width_stretched": new_width_stretched,
+						"max_bytes_per_file": max_bytes_per_file,
+						"frames_to_update_stats": frames_to_update_stats
+					}
+					extra_variations_info[variation["id"]] = processing.process_frames(info)
 
-		processing.remove_url_files(temp_downloads_path)
+			# gets catched by Node.js, doesn't get written to the terminal
+			print(json.dumps(extra_variations_info))
 
-		# print the time it took to run the program
-		time_elapsed = time.time() - t0
-		minutes = floor(time_elapsed / 60)
-		seconds = floor(time_elapsed % 60)
-		# TODO: The reason I don't just print the elapsed time, instead of passing it to Node.js,
-		# is because when I print extra_variations_info and the elapsed time information after each other,
-		# they get concatenated at Node.js' side for some reason.
-		# time.sleep() or sys.stdout.write don't seem to fix this.
-		print(json.dumps({
-			"extra_variations_info": extra_variations_info,
-			"elapsed": {
-				"minutes": minutes,
-				"seconds": seconds
-			}
-		}), end="\r", flush=True)
-		# print("\nDone! {} minutes and {} seconds".format(minutes, seconds))
-	except Exception as e:
-		# Python child processes can't print to the terminal, so this will get Node.js to print any Python errors
-		raise e
+			processing.remove_url_files(temp_downloads_path)
+
+			# print the time it took to run the program
+			time_elapsed = time.time() - t0
+			minutes = floor(time_elapsed / 60)
+			seconds = floor(time_elapsed % 60)
+			outputting.output(f, "Done! {} minutes and {} seconds".format(minutes, seconds))
+		except Exception as e:
+			raise e
 
 if __name__ == '__main__':
     main()

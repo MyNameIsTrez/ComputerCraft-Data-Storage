@@ -89,25 +89,17 @@ function renderAscii(entries) {
 
 	py.stdout.on("data", (buffer) => {
 		const input = buffer.toString();
-		// Important objects are sent through python's print(), everything else is written to output.txt.
-		for (const str of input.split("\n")) {
-			try {
-				const obj = JSON.parse(str);
-
-				// 0 seconds, 1 second, 2 seconds
-				const minutesStr = `${obj.elapsed.minutes} minute${obj.elapsed.minutes === 1 ? "" : "s"}`;
-				const secondsStr = `${obj.elapsed.seconds} second${obj.elapsed.seconds === 1 ? "" : "s"}`;
-				console.log(`\nDone\n\t${minutesStr} and ${secondsStr}`);
-
-				dbAppendInfo(obj.extra_variations_info);
-			} catch (error) {
-				console.log(str);
-			}
+		// Important objects are sent through python's print(), other information is written to output.txt.
+		try {
+			dbAppendInfo(JSON.parse(input));
+		} catch (error) {
+			console.log(error);
+			console.log(input);
 		}
 	});
 
 	py.stdin.write(JSON.stringify(entries));
-	py.stdin.end();
+	py.stdin.end(); // TODO: Necessary?
 }
 
 function dbAppendInfo(extraVariationsInfo) {
@@ -124,7 +116,7 @@ function createError(err) {
 	console.log(err);
 }
 
-// app.post("/add", async (request, response) => {
+// app.get("/get", async (request, response) => {
 // 	const info = repairMangledInfo(request.body);
 // 	const format = checkInfoFormat(info);
 // 	if (format === true) {

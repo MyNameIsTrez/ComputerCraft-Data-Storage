@@ -7,21 +7,21 @@ from PIL import Image
 
 # Utils
 import utils.char as char
+import utils.outputting as outputting
 
 
-def download_url_files(entries, temp_downloads_path):
+def download_url_files(entries, temp_downloads_path, f):
 	if not os.path.exists(temp_downloads_path):
 		os.mkdir(temp_downloads_path)
 	for entry in entries:
 		filename = entry["url_name"]
-		print("\t'" + filename + "'", end="\r", flush=True)
+		outputting.output(f, "'{}'".format(filename))
 		r = requests.get(entry["url"], stream=True)
 		file_path = os.path.join(temp_downloads_path, filename + "." + entry["extension"])
-		with open(file_path, "wb") as f:
+		with open(file_path, "wb") as url_file:
 			for chunk in r.iter_content(chunk_size=1024):
 				if chunk:
-					f.write(chunk)
-			f.close()  # Necessary?
+					url_file.write(chunk)
 
 
 def remove_url_files(temp_downloads_path):
@@ -32,7 +32,7 @@ def remove_url_files(temp_downloads_path):
 
 def process_frames(info):
 	if info["minimal_printing"]:
-		print('\nProcessing {}'.format(info["displayed_name_in_quotes"]), end="\r", flush=True)
+		outputting.output(info["f"], "Processing {}".format(info["displayed_name_in_quotes"]))
 
 	if info["extension"] == "mp4":
 		info["video"] = cv2.VideoCapture(info["url_file_path"])
@@ -58,15 +58,10 @@ def process_frames(info):
 	elif info["extension"] == "jpeg" or info["extension"] == "png" or info["extension"] == "jpg":
 		info = process_image_frame(info)
 	else:
-		print("Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.", end="\r", flush=True)
-	
-	# print('Finished {}'.format(info["displayed_name_in_quotes"]), end="\r", flush=True)
-
-	if not info["minimal_printing"]:
-		print()
+		outputting.output(info["f"], "Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
 	
 	if info["minimal_printing"]:
-		print('Finished processing {}'.format(info["displayed_name_in_quotes"]), end="\r", flush=True)
+		outputting.output(info["f"], "Finished processing {}".format(info["displayed_name_in_quotes"]))
 
 	return {
 		"frame_files_count": info["frame_files_count"],
@@ -85,9 +80,9 @@ def get_new_width(info):
 			old_width = info["old_image"].size[0]
 			old_height = info["old_image"].size[1]
 		except IOError:
-			print("Can't load!", end="\r", flush=True)
+			outputting.output(info["f"], "Can't load!")
 	else:
-		print("Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!", end="\r", flush=True)
+		outputting.output(info["f"], "Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
 
 	if info["new_width_stretched"]:
 		return info["width"]
@@ -292,6 +287,6 @@ def print_stats(info):
 	speed_pixel_loop       = "pixel loop: {} frames/s".format(  floor(1 / info["pixel_loop_time"])   if info["pixel_loop_time"] > 0   else "1000+")
 	speed_write            = "write: {} frames/s".format(       floor(1 / info["write_time"])        if info["write_time"] > 0        else "1000+")
 
-	# print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, sep=" | ", end="\r", flush=True)
+	# outputting.output(info["f"], " | ".join((info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed)))
 	if not info["minimal_printing"]:
-		print("\t" + info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, speed_get_frame, speed_prepare_loop, speed_pixel_loop, speed_write, sep=" | ", end="\r", flush=True)
+		outputting.output(info["f"], " | ".join((info["displayed_name_in_quotes"], progress, eta, time_passed_str, speed_frames_processed, speed_get_frame, speed_prepare_loop, speed_pixel_loop, speed_write)))
