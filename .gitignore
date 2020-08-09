@@ -1,10 +1,8 @@
 .vscode
-asciify/animations
-asciify/python/temp downloads
-asciify/ascii-frames
-asciify/example-js-to-py
 asciify/node_modules
-asciify/ascii-info.db
-asciify/output.txt
+asciify/metadata.db
+asciify/python/temp-downloads
+asciify/ascii-content
+asciify/conversion-progress.txt
 extra/temp
 # asciify/python/utils/__pychache__

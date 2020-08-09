@@ -47,19 +47,19 @@ def read_in():
     return json.loads(lines[0])
 
 def main():
-	with open('output.txt', 'w') as f:
+	with open('conversion-progress.txt', 'w') as f:
 		try:
 			entries = read_in()
 
 			t0 = time.time()
 
 			outputting.output(f, "Downloading URL files")
-			temp_downloads_path = os.path.join(current_path, "temp downloads")
+			temp_downloads_path = os.path.join(current_path, "temp-downloads")
 			processing.download_url_files(entries, temp_downloads_path, f)
 
-			ascii_frames_path = os.path.join(current_path, "..", "ascii-frames")
-			if not os.path.exists(ascii_frames_path):
-				os.mkdir(ascii_frames_path)
+			ascii_content_path = os.path.join(current_path, "..", "ascii-content")
+			if not os.path.exists(ascii_content_path):
+				os.mkdir(ascii_content_path)
 
 			if not minimal_printing:
 				outputting.output(f, "Processing")
@@ -73,7 +73,7 @@ def main():
 					displayed_name_in_quotes = "'{}'".format(variation["displayed_name"])
 					info = {
 						"f": f,
-						"ascii_frames_path": ascii_frames_path,
+						"ascii_content_path": ascii_content_path,
 						"url_file_path": url_file_path,
 						"url_name": url_name,
 						"extension": extension,

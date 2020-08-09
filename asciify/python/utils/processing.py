@@ -44,7 +44,7 @@ def process_frames(info):
 	info["new_width"] = get_new_width(info)
 
 	# Create a folder for storing the ASCII frames for this variation.
-	info["ascii_frames_variation_path"] = os.path.join(info["ascii_frames_path"], info["id"])
+	info["ascii_frames_variation_path"] = os.path.join(info["ascii_content_path"], info["id"])
 	if not os.path.exists(info["ascii_frames_variation_path"]):
 		os.mkdir(info["ascii_frames_variation_path"])
 
@@ -151,6 +151,7 @@ def process_gif_frames(info):
 			info["i"] += 1
 	except:
 		# this part gets reached when the code tries to find the next frame, while it has reached the end of the gif
+		info["old_image"].close()
 		info["output_file"].close()
 		info["frame_files_count"] -= 1
 		return info
@@ -169,6 +170,7 @@ def process_image_frame(info):
 	# frame = old_image.resize((new_width - 1, info["height"]), Image.BILINEAR)
 	# frame = old_image.resize((new_width - 1, info["height"]), Image.BICUBIC)
 	# frame = frame.convert("RGB")
+	info["old_image"].close()
 	info["get_frame_time"] = time.time() - info["start_frame_time"]
 	info = process_frame(info)
 	info["output_file"].close()
@@ -213,9 +215,9 @@ def process_frame(info):
 
 	# gives each frame its own line in the outputted file, so lines can easily be found and parsed
 	if info["frame_count"] > 1:
-		final_string = string
-	else:
 		final_string = "\n" + string
+	else:
+		final_string = string
 
 	info["output_file"].write(final_string)
 

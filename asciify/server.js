@@ -16,11 +16,11 @@ app.listen(3000, "0.0.0.0", () => {
 app.use(bodyParser.urlencoded({ extended: true }))
 
 const db = new Datastore({
-	filename: "ascii-info.db", autoload: true
+	filename: "metadata.db", autoload: true
 })
 
 app.post("/ascii-add", async (req, res) => {
-	const info = repairMangledInfo(req.body)
+	const info = repairMangledBody(req.body)
 	const format = checkInfoFormat(info)
 	if (format === true) {
 		const entriesWithVariationIDs = await dbAddVariations(info.entries)
@@ -32,7 +32,7 @@ app.post("/ascii-add", async (req, res) => {
 	res.end()
 })
 
-function repairMangledInfo(mangledInfo) {
+function repairMangledBody(mangledInfo) {
 	const key = getMangledKey(mangledInfo)
 	const value = mangledInfo[key]
 	return JSON.parse(value)
@@ -89,7 +89,7 @@ function renderAscii(entries) {
 
 	py.stdout.on("data", (buffer) => {
 		const input = buffer.toString()
-		// Important objects are sent through python's print(), other information is written to output.txt.
+		// Important objects are sent through python's print(), other information is written to conversion-progress.txt.
 		try {
 			dbAppendInfo(JSON.parse(input))
 		} catch (err) {
@@ -116,20 +116,20 @@ function createError(err) {
 	console.log(err)
 }
 
-app.get("/ascii-info", async (req, res) => { db.find({}, function (err, docs) { res.send(docs) }) })
+app.get("/metadata", async (req, res) => { db.find({}, function (err, docs) { res.send(docs) }) })
 
-app.get("/ascii-output", (req, res) => res.download("output.txt"))
+app.get("/conversion-progress", (req, res) => res.download("conversion-progress.txt"))
 
-app.post("/ascii-file", (req, res) => {
-	const fileID = repairMangledInfo(req.body)
-	const path = `ascii-frames/ktFgVkXKqm21IF1f/${fileID}.txt`
-	fs.access(path, fs.F_OK, (err) => {
+app.post("/get-ascii-subfile", (req, res) => {
+	const info = repairMangledBody(req.body)
+	const subfilePath = `ascii-content/${info.asciiID}/${info.subfileID}.txt`
+	fs.access(subfilePath, fs.F_OK, (err) => {
+		// File doesn't exist.
 		if (err) {
-			// File doesn't exist.
 			res.send("error")
 			return
 		}
 		// File exists.
-		res.download(path)
+		res.download(subfilePath)
 	})
 })
