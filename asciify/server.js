@@ -80,7 +80,7 @@ async function dbInsertVariation(variation) {
 
 function renderAscii(entries) {
 	// console.log(JSON.stringify(entries, undefined, 2))
-	const py = spawn("python", ["python/render.py"])
+	const py = spawn("python3", ["python/render.py"])
 
 	// Prints whatever Python has attempted to print
 	py.stderr.on("data", (data) => {

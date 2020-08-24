@@ -2,8 +2,8 @@ import os, sys, time, json
 from math import floor
 
 # From the utils folder
-import utils.processing as processing
-import utils.outputting as outputting
+from utils import processing
+from utils import outputting
 
 
 current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
