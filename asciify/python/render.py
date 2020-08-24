@@ -89,9 +89,8 @@ def main():
 						"frames_to_update_stats": frames_to_update_stats
 					}
 					extra_variations_info[variation["id"]] = processing.process_frames(info)
-
-			# gets catched by Node.js, doesn't get written to the terminal
-			print(json.dumps(extra_variations_info))
+					# gets caught by Node.js, doesn't get written to the terminal
+					print(json.dumps(extra_variations_info))
 
 			processing.remove_url_files(temp_downloads_path)
 
