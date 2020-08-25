@@ -180,7 +180,7 @@ def process_image_frame(info):
 
 
 def process_frame(info):
-	outputting.output(info["f"], "Starting pixel loop {}".format(frame_count))
+	outputting.output(info["f"], "Starting pixel loop {}".format(info["frame_count"]))
 	prepare_loop_start_time = time.time()
 
 	# not sure if it is necessary to convert the frame into RGBA!
@@ -234,7 +234,7 @@ def process_frame(info):
 		print_stats(info)
 
 	info["file_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
-	outputting.output(info["f"], "Ended pixel loop {}".format(frame_count))
+	outputting.output(info["f"], "Ended pixel loop {}".format(info["frame_count"]))
 
 	return info
 
