@@ -51,7 +51,7 @@ def process_frames(info):
 	info["frame_count"] = 0
 	info["i"] = 0
 
-	outputting.output(f, "Starting pixel loop")
+	outputting.output(info["f"], "Starting pixel loop")
 	if info["extension"] == "mp4":
 		info = process_mp4_frames(info)
 	elif info["extension"] == "gif":
@@ -60,7 +60,7 @@ def process_frames(info):
 		info = process_image_frame(info)
 	else:
 		outputting.output(info["f"], "Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
-	outputting.output(f, "Finished pixel loop")
+	outputting.output(info["f"], "Finished pixel loop")
 	
 	if info["minimal_printing"]:
 		outputting.output(info["f"], "Finished processing {}".format(info["displayed_name_in_quotes"]))
@@ -180,6 +180,7 @@ def process_image_frame(info):
 
 
 def process_frame(info):
+	outputting.output(info["f"], "Starting pixel loop {}".format(frame_count))
 	prepare_loop_start_time = time.time()
 
 	# not sure if it is necessary to convert the frame into RGBA!
@@ -233,6 +234,7 @@ def process_frame(info):
 		print_stats(info)
 
 	info["file_byte_count"] += len(final_string.encode("utf8")) # TODO: utf8 encoding necessary?
+	outputting.output(info["f"], "Ended pixel loop {}".format(frame_count))
 
 	return info
 
