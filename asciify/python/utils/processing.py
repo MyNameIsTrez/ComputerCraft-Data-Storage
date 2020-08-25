@@ -51,6 +51,7 @@ def process_frames(info):
 	info["frame_count"] = 0
 	info["i"] = 0
 
+	outputting.output(f, "Starting pixel loop")
 	if info["extension"] == "mp4":
 		info = process_mp4_frames(info)
 	elif info["extension"] == "gif":
@@ -59,6 +60,7 @@ def process_frames(info):
 		info = process_image_frame(info)
 	else:
 		outputting.output(info["f"], "Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
+	outputting.output(f, "Finished pixel loop")
 	
 	if info["minimal_printing"]:
 		outputting.output(info["f"], "Finished processing {}".format(info["displayed_name_in_quotes"]))
