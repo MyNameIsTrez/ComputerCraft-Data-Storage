@@ -88,6 +88,7 @@ function renderAscii(entries) {
 	})
 
 	py.stdout.on("data", (buffer) => {
+		console.log("Python printed")
 		const input = buffer.toString()
 		// Important objects are sent through python's print(), other information is written to conversion-progress.txt.
 		try {
@@ -133,3 +134,8 @@ app.post("/get-ascii-subfile", (req, res) => {
 		res.download(subfilePath)
 	})
 })
+
+app.get("/test-res-end", (req, res) => res.end());
+app.get("/test-res-send", (req, res) => res.send("foo!"));
+
+app.post("/mirror-message", (req, res) => res.send(req.body));
