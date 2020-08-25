@@ -88,7 +88,9 @@ def main():
 						"max_bytes_per_file": max_bytes_per_file,
 						"frames_to_update_stats": frames_to_update_stats
 					}
+					outputting.output(f, "Starting processing")
 					extra_variations_info[variation["id"]] = processing.process_frames(info)
+					outputting.output(f, "Done processing")
 
 			# gets caught by Node.js, doesn't get written to the terminal
 			print(json.dumps(extra_variations_info))
