@@ -540,25 +540,25 @@ def get_brightness_normal(tup):
 		return 0
 
 
-def get_color_from_palette(pixel):
-	# TODO: Currently ignores the alpha, might need to include it.
-	# return chars_extended[np.array([sqdistance(color, pixel[:3]) for color in color_palette]).argmin()]
-
-	distances = [sqdistance(color, pixel[:3]) for color in color_palette]
-	index = np.array(distances).argmin()
-	return chars_extended[index]
-
-
 # def get_color_from_palette(pixel):
-# 	smallest_found_diff = 255 ** 2 * 3 + 1 # Init with largest possible diff + 1.
-# 	for i in range(color_palette_len):
-# 		diff = (pixel[0] - color_palette[i][0]) ** 2 + (pixel[1] - color_palette[i][1]) ** 2 + (pixel[2] - color_palette[i][2]) ** 2
-# 		if diff < smallest_diff: # TODO: Figure out *why* this doesn't seem to speedup the program, even though ~37% of pixels end up here. 
-# 			return chars_extended[i]
-# 		if diff < smallest_found_diff:
-# 			smallest_found_diff = diff
-# 			smallestDiffIndex = i
-# 	return chars_extended[smallestDiffIndex]
+# 	# TODO: Currently ignores the alpha, might need to include it.
+# 	# return chars_extended[np.array([sqdistance(color, pixel[:3]) for color in color_palette]).argmin()]
+
+# 	distances = [sqdistance(color, pixel[:3]) for color in color_palette]
+# 	index = np.array(distances).argmin()
+# 	return chars_extended[index]
+
+
+def get_color_from_palette(pixel):
+	smallest_found_diff = 255 ** 2 * 3 + 1 # Init with largest possible diff + 1.
+	for i in range(color_palette_len):
+		diff = (pixel[0] - color_palette[i][0]) ** 2 + (pixel[1] - color_palette[i][1]) ** 2 + (pixel[2] - color_palette[i][2]) ** 2
+		if diff < smallest_diff: # TODO: Figure out *why* this doesn't seem to speedup the program, even though ~37% of pixels end up here. 
+			return chars_extended[i]
+		if diff < smallest_found_diff:
+			smallest_found_diff = diff
+			smallestDiffIndex = i
+	return chars_extended[smallestDiffIndex]
 
 
 # The given n should be between 0 and 1, both inclusive.
