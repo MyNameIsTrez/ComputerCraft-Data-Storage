@@ -199,9 +199,9 @@ def process_frame(info):
 	pixel_loop_start_time = time.time()
 
 	for y in range(info["height"]):
-		outputting.output(info["f"], "y: {}, x: {}".format(y, x))
 		for x in range(modified_width):
-			# TODO: Let NP access the frame_pixels array directly, instead of looping through each pixel manually!
+			outputting.output(info["f"], "y: {}, x: {}".format(y, x))
+			# TODO: Let Numpy access the frame_pixels array directly, instead of looping through each pixel manually!
 			string += char.get_char(frame_pixels[x, y], info["palette"])
 
 		# the last character in a frame doesn't need a return character after it
