@@ -1,7 +1,7 @@
 from bisect import bisect_left
 
-import numpy as np
-from scipy.spatial.distance import sqeuclidean as sqdistance
+# import numpy as np
+# from scipy.spatial.distance import sqeuclidean as sqdistance
 
 
 ## README ####################
