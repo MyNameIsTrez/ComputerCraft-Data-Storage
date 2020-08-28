@@ -88,7 +88,6 @@ function renderAscii(entries) {
 	})
 
 	py.stdout.on("data", (buffer) => {
-		console.log("Python printed")
 		const input = buffer.toString()
 		// Important objects are sent through python's print(), other information is written to conversion-progress.txt.
 		try {
