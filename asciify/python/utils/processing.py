@@ -208,8 +208,8 @@ def process_frame(info):
 			# if (cur_num < lowest_num):
 				# lowest_num = cur_num
 				# print(lowest_num)
-			print(newimage.getpixel((x, y)))
-			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)))
+			print(newimage.getpixel((x, y)) - 1)
+			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)) - 1)
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
 			# add a return character to the end of each horizontal line,
