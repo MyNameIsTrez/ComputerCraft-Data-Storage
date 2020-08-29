@@ -21,8 +21,9 @@ def get_palette_img(palette_name):
 	palette_img.putpalette(palette) # TODO: Try to merge this line with the return below.
 	return palette_img
 
-def get_char(palette, char_index):
-	return chars[palette][char_index]
+def get_char(f, palette_name, char_index):
+	outputting.output(f, "char_index: {}".format(char_index))
+	return chars[palette_name][char_index]
 
 
 
