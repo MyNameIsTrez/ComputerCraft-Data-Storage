@@ -19,7 +19,7 @@ def get_palette_img(palette_name):
 	palette_img.putpalette(palette) # TODO: Try to merge this line with the return below.
 	return palette_img
 
-def get_char(char_index, palette):
+def get_char(palette, char_index):
 	return chars[palette][char_index]
 
 
