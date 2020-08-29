@@ -204,7 +204,7 @@ def process_frame(info):
 	lowest_num = 1000
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			cur_num = newimage.getpixel((x, y) - 1)
+			cur_num = newimage.getpixel((x, y)) - 1
 			if (cur_num < lowest_num):
 				lowest_num = cur_num
 				print(lowest_num)
