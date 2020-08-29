@@ -3,13 +3,16 @@ from PIL import Image
 oldimage = Image.open("eiffel.jpg")
 palette = [0, 0, 0, 255, 255, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0, 255, 0, 255, 0, 255, 255]
 # palette = [0, 0, 0, 102, 102, 102, 176, 176, 176, 255, 255, 255]
-# palette = [0, 0, 0, 255, 255, 255]
+# palette = [100, 100, 100, 255, 255, 255]
 
-# Fill empty spots with zeros, because putpalette expects 256 * 3 ints.
-for k in range((256 - int(len(palette) / 3)) * 3):
-	palette.append(0)
+# putpalette() always expects 256 * 3 ints.
+for k in range(256 - int(len(palette) / 3)):
+	for j in range(3):
+		palette.append(palette[j])
 
-palette_img = Image.new('P', (16, 16))
+# palette_img = Image.new('P', (16, 16))
+palette_img = Image.new('P', (1, 1))
+# palette_img = Image.new('P', (int(len(palette) / 3), 1))
 # palette_img.putpalette(palette * int((256 * 3) / len(palette)))
 palette_img.putpalette(palette)
 
@@ -21,12 +24,13 @@ newimage = oldimage.quantize(palette=palette_img, dither=True)
 for i in range(2):
 	for j in range(2):
 		index = newimage.getpixel((i, j))  # index in the palette
+		# print(index)
 		print(index)
-		# base = 3 * index  # because each palette color has 3 components
-		# r, g, b = palette[base:base+3]
-		# print("r: {}, g: {}, b: {}".format(r, g, b))
+		base = 3 * index  # because each palette color has 3 components
+		r, g, b = palette[base:base+3]
+		print("r: {}, g: {}, b: {}".format(r, g, b))
 
-# # newimage.show()
+newimage.show()
 
 
 # color_count = 20

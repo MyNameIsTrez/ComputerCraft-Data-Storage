@@ -14,12 +14,12 @@ chars = {
 def get_palette_img(palette_name):
 	palette = palettes[palette_name]
 
-	# Fill empty spots with zeros, because putpalette expects 256 * 3 ints.
-	# for k in range((256 - int(len(palette) / 3)) * 3):
-	# 	palette.append(0)
-	# palette_img = Image.new("P", (16, 16))
+	# putpalette() always expects 256 * 3 ints.
+	for k in range(256 - int(len(palette) / 3)):
+		for j in range(3):
+			palette.append(palette[j])
 
-	palette_img = Image.new("P", (int(len(palette) / 3), 1))
+	palette_img = Image.new("P", (1, 1))
 	palette_img.putpalette(palette) # TODO: Try to merge this line with the return below.
 	return palette_img
 
