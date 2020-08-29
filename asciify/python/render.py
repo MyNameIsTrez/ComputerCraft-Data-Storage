@@ -4,6 +4,7 @@ from math import floor
 # From the utils folder
 from utils import processing
 from utils import outputting
+from utils import char
 
 
 current_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
@@ -86,8 +87,10 @@ def main():
 						"frame_skipping": frame_skipping,
 						"new_width_stretched": new_width_stretched,
 						"max_bytes_per_file": max_bytes_per_file,
-						"frames_to_update_stats": frames_to_update_stats
+						"frames_to_update_stats": frames_to_update_stats,
+						"palette_img": char.get_palette_img(variation["palette"])
 					}
+					outputting.output(f, info["palette_img"])
 					extra_variations_info[variation["id"]] = processing.process_frames(info)
 
 			# gets caught by Node.js, doesn't get written to the terminal

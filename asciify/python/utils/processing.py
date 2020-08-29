@@ -182,7 +182,7 @@ def process_frame(info):
 
 	# not sure if it is necessary to convert the frame into RGBA!
 	# load the pixels of the frame
-	frame_pixels = info["frame"].convert("RGBA").load()
+	# frame_pixels = info["frame"].convert("RGBA").load()
 
 	# initializes empty variables for the coming "for y, for x" loop
 	prev_char = None
@@ -197,12 +197,18 @@ def process_frame(info):
 
 	# measure the time it takes for the coming "for y, for x" loop to execute
 	pixel_loop_start_time = time.time()
-
+	
+	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
+	palette = newimage.getpalette() # TODO: Not sure if getpalette() call is necessary.
+	frame = info["frame"]
+	palette = info["palette"]
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			outputting.output(info["f"], "y: {}, x: {}".format(y, x))
+			string += char.get_char(frame.getpixel((x, y)), palette)
+			outputting.output(info["f"], "y: {}, x: {}, char_index: {}".format(y, x, frame.getpixel((x, y))))
+			# outputting.output(info["f"], "y: {}, x: {}".format(y, x))
 			# TODO: Let Numpy access the frame_pixels array directly, instead of looping through each pixel manually!
-			string += char.get_char(frame_pixels[x, y], info["palette"])
+			# string += char.get_char(frame_pixels[x, y], info["palette"])
 
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
