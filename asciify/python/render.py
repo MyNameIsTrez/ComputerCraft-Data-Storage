@@ -90,7 +90,6 @@ def main():
 						"frames_to_update_stats": frames_to_update_stats,
 						"palette_img": char.get_palette_img(variation["palette"])
 					}
-					outputting.output(f, info["palette_img"])
 					extra_variations_info[variation["id"]] = processing.process_frames(info)
 
 			# gets caught by Node.js, doesn't get written to the terminal

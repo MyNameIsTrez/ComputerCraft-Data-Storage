@@ -205,7 +205,7 @@ def process_frame(info):
 	for y in range(info["height"]):
 		for x in range(modified_width):
 			string += char.get_char(frame.getpixel((x, y)), palette)
-			outputting.output(info["f"], "y: {}, x: {}".format(y, x))
+			outputting.output(info["f"], "y: {}, x: {}, char_index: {}".format(y, x, frame.getpixel((x, y))))
 			# outputting.output(info["f"], "y: {}, x: {}".format(y, x))
 			# TODO: Let Numpy access the frame_pixels array directly, instead of looping through each pixel manually!
 			# string += char.get_char(frame_pixels[x, y], info["palette"])
