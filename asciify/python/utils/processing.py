@@ -204,12 +204,12 @@ def process_frame(info):
 	lowest_num = 1000
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			cur_num = newimage.getpixel((x, y)) - 1
+			cur_num = newimage.getpixel((x, y))
 			if (cur_num < lowest_num):
 				lowest_num = cur_num
 				print(lowest_num)
-			# print(newimage.getpixel((x, y)) - 1)
-			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)) - 1)
+			# print(newimage.getpixel((x, y)))
+			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)))
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
 			# add a return character to the end of each horizontal line,
