@@ -200,12 +200,11 @@ def process_frame(info):
 	
 	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
 	palette = newimage.getpalette() # TODO: Not sure if getpalette() call is necessary.
-	frame = info["frame"]
 	palette = info["palette"]
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			outputting.output(info["f"], "y: {}, x: {}, char_index: {}".format(y, x, frame.getpixel((x, y))))
-			string += char.get_char(palette, frame.getpixel((x, y)))
+			outputting.output(info["f"], "y: {}, x: {}, char_index: {}".format(y, x, newimage.getpixel((x, y))))
+			string += char.get_char(palette, newimage.getpixel((x, y)))
 			# outputting.output(info["f"], "y: {}, x: {}".format(y, x))
 			# TODO: Let Numpy access the frame_pixels array directly, instead of looping through each pixel manually!
 			# string += char.get_char(frame_pixels[x, y], info["palette"])
