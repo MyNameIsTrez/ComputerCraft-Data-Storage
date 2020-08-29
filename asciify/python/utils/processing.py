@@ -207,7 +207,7 @@ def process_frame(info):
 			cur_num = newimage.getpixel((x, y))
 			if (cur_num < lowest_num):
 				lowest_num = cur_num
-				base = 3 * index
+				base = 3 * cur_num
 				print("lowest_num: {}, colors: {}".format(lowest_number, palette[base:base+3]))
 			# print(newimage.getpixel((x, y)))
 			string += char.get_char(info["f"], palette_name, newimage.getpixel((x, y)))
