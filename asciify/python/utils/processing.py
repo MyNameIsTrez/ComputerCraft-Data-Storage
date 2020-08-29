@@ -203,6 +203,7 @@ def process_frame(info):
 	palette = info["palette"]
 	for y in range(info["height"]):
 		for x in range(modified_width):
+			print(newimage.getpixel((x, y)))
 			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)))
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
