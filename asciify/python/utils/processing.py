@@ -201,13 +201,13 @@ def process_frame(info):
 	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
 	palette = newimage.getpalette() # TODO: I don't think this getpalette() call is necessary!
 	palette = info["palette"]
-	lowest_num = 1000
+	# lowest_num = 1000
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			cur_num = newimage.getpixel((x, y))
-			if (cur_num < lowest_num):
-				lowest_num = cur_num
-				print(lowest_num)
+			# cur_num = newimage.getpixel((x, y))
+			# if (cur_num < lowest_num):
+			# 	lowest_num = cur_num
+			# 	print(lowest_num)
 			# print(newimage.getpixel((x, y)))
 			string += char.get_char(info["f"], palette, newimage.getpixel((x, y)))
 		# the last character in a frame doesn't need a return character after it
