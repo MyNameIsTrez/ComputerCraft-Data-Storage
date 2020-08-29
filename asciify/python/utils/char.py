@@ -19,7 +19,7 @@ def get_palette_img(palette_name):
 	# 	palette.append(0)
 	# palette_img = Image.new("P", (16, 16))
 
-	palette_img = Image.new("P", (len(palette), 1))
+	palette_img = Image.new("P", (int(len(palette) / 3), 1))
 	palette_img.putpalette(palette) # TODO: Try to merge this line with the return below.
 	return palette_img
 
