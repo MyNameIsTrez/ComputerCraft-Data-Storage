@@ -58,7 +58,7 @@ def process_frames(info):
 	elif info["extension"] == "jpeg" or info["extension"] == "png" or info["extension"] == "jpg":
 		info = process_image_frame(info)
 	else:
-		outputting.output(info["f"], "Entered an invalid file extension! Only mp4, gif, jpeg, png and jpg extensions are allowed.")
+		outputting.output(info["f"], "Entered an invalid file extension; only files with mp4/gif/png/jpeg/jpg extensions are accepted!")
 	
 	if info["minimal_printing"]:
 		outputting.output(info["f"], "Finished processing {}".format(info["displayed_name_in_quotes"]))
@@ -82,7 +82,7 @@ def get_new_width(info):
 		except IOError:
 			outputting.output(info["f"], "Can't load!")
 	else:
-		outputting.output(info["f"], "Entered an invalid file type; only mp4, gif, jpeg, png and jpg extensions are allowed!")
+		outputting.output(info["f"], "Entered an invalid file extension; only files with mp4/gif/png/jpeg/jpg extensions are accepted!")
 
 	if info["new_width_stretched"]:
 		return info["width"]
@@ -199,16 +199,11 @@ def process_frame(info):
 	pixel_loop_start_time = time.time()
 	
 	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
-	palette = newimage.getpalette() # TODO: Not sure if getpalette() call is necessary.
+	palette = newimage.getpalette() # TODO: I don't think this getpalette() call is necessary!
 	palette = info["palette"]
 	for y in range(info["height"]):
 		for x in range(modified_width):
-			outputting.output(info["f"], "y: {}, x: {}, char_index: {}".format(y, x, newimage.getpixel((x, y))))
 			string += char.get_char(palette, newimage.getpixel((x, y)))
-			# outputting.output(info["f"], "y: {}, x: {}".format(y, x))
-			# TODO: Let Numpy access the frame_pixels array directly, instead of looping through each pixel manually!
-			# string += char.get_char(frame_pixels[x, y], info["palette"])
-
 		# the last character in a frame doesn't need a return character after it
 		if y < info["height"] - 1:
 			# add a return character to the end of each horizontal line,
