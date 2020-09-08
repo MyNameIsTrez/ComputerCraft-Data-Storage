@@ -16,7 +16,7 @@ with open('extra/fonts/palette.json') as palette:
 	colors = json.loads(palette.read())
 
 def get_color(i):
-	return tuple(colors[i])
+	return (colors[i], colors[i + 1], colors[i + 2])
 
 for row in range(row_count):
 	offset = row * chars_in_row_max
@@ -26,7 +26,7 @@ for row in range(row_count):
 	char_pix = char_img.load()
 
 	for char_val in range(chars_in_row):
-		i = row * chars_in_row_max + char_val
+		i = (row * chars_in_row_max + char_val) * 3
 		for bx in range (char_size):
 			for by in range (char_size):
 				x = char_val * char_size + bx
