@@ -14,6 +14,7 @@ void	skip_rand(int n)
 
 void	generate_colors(int color_count)
 {
+	char	file_name[] = "palette-srgb.txt"
 	FILE	*fp_r;
 	FILE	*fp_w;
 	int	colors[color_count * 3];
@@ -72,7 +73,7 @@ void	generate_colors(int color_count)
 	
 	gens = 1;
 
-	if ((fp_r = fopen("palette.txt", "r")) != NULL)
+	if ((fp_r = fopen(file_name, "r")) != NULL)
 	{
 		fscanf(fp_r, "%d", &gens_done);
 		
@@ -105,13 +106,18 @@ void	generate_colors(int color_count)
 			{
 				if (idx1 != idx2)
 				{
-					clr1_r = colors[idx1 + 0];
-					clr1_g = colors[idx1 + 1];
-					clr1_b = colors[idx1 + 2];
+					// https://stackoverflow.com/a/56678483
+					s_r1 = colors[idx1 + 0];
+					s_g1 = colors[idx1 + 1];
+					s_b1 = colors[idx1 + 2];
 		
-					clr2_r = colors[idx2 + 0];
-					clr2_g = colors[idx2 + 1];
-					clr2_b = colors[idx2 + 2];
+					s_r2 = colors[idx2 + 0];
+					s_g2 = colors[idx2 + 1];
+					s_b2 = colors[idx2 + 2];
+
+					v_r1 = s_r1 / 255;
+					v_g1 = s_g1 / 255;
+					v_b1 = s_b1 / 255;
 		
 					diff =
 						(clr1_r - clr2_r) * (clr1_r - clr2_r) +
@@ -135,7 +141,7 @@ void	generate_colors(int color_count)
 			
 			largest_diff = smallest_diff;
 
-			if ((fp_w = fopen("palette.txt", "w")) == NULL)
+			if ((fp_w = fopen(file_name, "w")) == NULL)
 				printf("Error getting write handle.");
 
 			fprintf(fp_w, "%d\n", gens);
