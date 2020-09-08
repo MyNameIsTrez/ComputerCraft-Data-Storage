@@ -131,15 +131,16 @@ void	generate_colors(int color_count)
 		if (smallest_diff > largest_diff)
 		{
 			end_t = clock();
-
+			total_t = (float)(end_t - start_t) / CLOCKS_PER_SEC;
+			
 			largest_diff = smallest_diff;
 
 			if ((fp_w = fopen("palette.txt", "w")) == NULL)
 				printf("Error getting write handle.");
 
 			fprintf(fp_w, "%d\n", gens);
-
-			total_t = (float)(end_t - start_t) / CLOCKS_PER_SEC;
+			fprintf(fp_w, "%d\n", smallest_diff);
+			fprintf(fp_w, "%f\n", total_t);
 
 			printf("%d score at gen %d, found after %f seconds\n", smallest_diff, gens, total_t);
 
