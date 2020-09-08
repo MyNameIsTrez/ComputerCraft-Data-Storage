@@ -92,6 +92,7 @@ function renderAscii(entries) {
 		// Important objects are sent through python's print(), other information is written to conversion-progress.txt.
 		try {
 			dbAppendInfo(JSON.parse(input))
+			console.log("Finished processing")
 		} catch (err) {
 			console.log(err)
 			console.log(input)
