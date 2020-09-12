@@ -4,6 +4,7 @@ from math import floor
 import requests
 import cv2
 from PIL import Image
+import numpy as np
 
 # Utils
 import utils.char as char
@@ -121,7 +122,10 @@ def process_mp4_frames(info):
 				info = try_create_new_output_file(info)
 				# cv2_frame = cv2.cvtColor(cv2_frame, cv2.COLOR_BGR2RGB)
 				cv2_frame = cv2.resize(cv2_frame, (info["new_width"] - 1, info["height"]))
-				info["frame"] = Image.fromarray(cv2_frame)  # pil pixels can be read faster than cv2 pixels, according to my tests
+				# TODO: Test if using cv2 to get the pixels in the frame is faster.
+				# TODO: Check if numpy call is necessary
+				arr = cv2.cvtColor(np.array(cv2_frame), cv2.COLOR_RGB2BGR)
+				info["frame"] = Image.fromarray(arr)
 				info["get_frame_time"] = time.time() - info["start_frame_time"]
 				info = process_frame(info)
 			info["i"] += 1
@@ -193,6 +197,7 @@ def process_frame(info):
 	# measure the time it takes for the coming "for y, for x" loop to execute
 	pixel_loop_start_time = time.time()
 	
+	info["frame"].save("foo/" + str(info["i"]) + ".png")
 	string = char.dither_to_str(info)
 	
 	pixel_loop_end_time = time.time()
