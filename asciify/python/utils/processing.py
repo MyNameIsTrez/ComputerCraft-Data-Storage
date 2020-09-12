@@ -147,7 +147,7 @@ def process_gif_frames(info):
 				info["frame"] = info["old_image"].resize((info["new_width"] - 1, info["height"]), Image.ANTIALIAS)
 				info["get_frame_time"] = time.time() - info["start_frame_time"]
 				info = process_frame(info)
-				info["old_image"].seek(info["old_image"].tell() + 1)  # gets the next frame
+				info["old_image"].seek(info["i"])
 			info["i"] += 1
 	except:
 		# this part gets reached when the code tries to find the next frame, while it has reached the end of the gif
@@ -199,6 +199,7 @@ def process_frame(info):
 	pixel_loop_start_time = time.time()
 	
 	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
+	# newimage.convert("RGB").save("foo/" + str(info["frame_count"]) + ".png")
 	palette = newimage.getpalette() # TODO: I don't think this getpalette() call is necessary!
 	palette_name = info["palette"]
 	for y in range(info["height"]):
