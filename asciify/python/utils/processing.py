@@ -187,29 +187,14 @@ def process_frame(info):
 	# initializes empty variables for the coming "for y, for x" loop
 	prev_char = None
 	prev_char_count = 0
-	string = ""
-
-	# the \n character at the end of every line needs to have one spot reserved
-	# this should ideally be done at the resizing of the frame stage instead!
-	modified_width = info["new_width"] - 1
 
 	prepare_loop_end_time = time.time()
 
 	# measure the time it takes for the coming "for y, for x" loop to execute
 	pixel_loop_start_time = time.time()
 	
-	newimage = info["frame"].quantize(palette=info["palette_img"], dither=True)
-	# newimage.convert("RGB").save("foo/" + str(info["frame_count"]) + ".png")
-	palette = newimage.getpalette() # TODO: I don't think this getpalette() call is necessary!
-	palette_name = info["palette"]
-	for y in range(info["height"]):
-		for x in range(modified_width):
-			string += char.get_char(info["f"], palette_name, newimage.getpixel((x, y)))
-		if y < info["height"] - 1:
-			# add a return character to the end of each horizontal line,
-			# so ComputerCraft can draw the entire frame with one write() statement
-			string += "\\n"
-
+	string = char.dither_to_str(info)
+	
 	pixel_loop_end_time = time.time()
 
 	write_start_time = time.time()
