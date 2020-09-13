@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 
+
 palettes = {
 	"vanilla": [0, 0, 0, 13, 13, 13, 27, 27, 27, 40, 40, 40, 54, 54, 54, 67, 67, 67, 81, 81, 81, 94, 94, 94, 107, 107, 107, 121, 121, 121, 134, 134, 134, 148, 148, 148, 161, 161, 161, 174, 174, 174, 188, 188, 188, 201, 201, 201, 215, 215, 215, 228, 228, 228, 242, 242, 242, 255, 255, 255],
 
@@ -8,6 +9,7 @@ palettes = {
 
 	"lmao": [0,0,0,255,255,255,255,0,0]
 }
+
 
 chars = {
 	"vanilla": [" ", ".", "'", ":", "-", "!", "/", "(", "=", "%", "1", "C", "3", "$", "2", "5", "A", "0", "#", "@"],
@@ -18,100 +20,19 @@ chars = {
 }
 
 
-def get_idx(x, y, w):
-	return x + y * w
-
-
-def get_clr(pxls, x, y, w):
-	i = get_idx(x, y, w)
-	return pxls[i]
-
-
-def get_closest_pal(cur_clr, pal, chars_count):
-	smallest_dist = float("inf")
+def get_palette_img(palette_name):
+	palette = palettes[palette_name]
 	
-	for char_idx in range(chars_count):
-		pal_r = pal[char_idx * 3 + 0]
-		pal_g = pal[char_idx * 3 + 1]
-		pal_b = pal[char_idx * 3 + 2]
-		
-		diff_r = (cur_clr[0] - pal_r) ** 2
-		diff_g = (cur_clr[1] - pal_g) ** 2
-		diff_b = (cur_clr[2] - pal_b) ** 2
+	# putpalette() always expects 256 * 3 ints.
+	for k in range(256 - int(len(palette) / 3)):
+		for j in range(3):
+			palette.append(palette[j])
+		chars[palette_name].append(chars[palette_name][0])
 
-		dist = diff_r + diff_g + diff_b
-		
-		if dist < smallest_dist:
-			smallest_dist = dist
-			closest_pal_clr = (pal_r, pal_g, pal_b)
-			closest_char_idx = char_idx
-
-	return closest_pal_clr, closest_char_idx
+	palette_img = Image.new("P", (1, 1))
+	palette_img.putpalette(palette) # TODO: Try to merge this line with the return below.
+	return palette_img
 
 
-def set_clr(pxls, clr, x, y, w):
-	i = get_idx(x, y, w)
-	pxls[i] = clr
-
-
-def distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h):
-	# TODO: This can just be a - when closest_pal_clr is a np array
-	err = np.subtract(cur_clr, closest_pal_clr)
-	
-	add_err(pxls, err, 7, x + 1, y    , w, h)
-	add_err(pxls, err, 3, x - 1, y + 1, w, h)
-	add_err(pxls, err, 5, x    , y + 1, w, h)
-	add_err(pxls, err, 1, x + 1, y + 1, w, h)
-
-def add_err(pxls, err, coeff, x, y, w, h):
-	# TODO: x >= w and y >= h may cause bugs
-	if x < 0 or x >= w or y < 0 or y >= h:
-		return
-	
-	cur_clr = get_clr(pxls, x, y, w)
-	new_clr = cur_clr + err * coeff / 16
-	set_clr(pxls, new_clr, x, y, w)
-
-
-def get_char(pal_name, char_idx):
-	return chars[pal_name][char_idx]
-
-
-# TODO: Increase speed with pxls as a NP array, look up "python pil replace a single rgba color" on StackOverflow for it
-def dither_to_str(info):
-	# TODO: Compare performance with a list, because Python may be recreating the string after every +=
-	string = ""
-
-	# the \n character at the end of every line needs to have one spot reserved
-	# TODO: do the -1 at the resizing of the frame instead
-	# Is it really necessary to use ["new_width"] instead of ["frame"].width?
-	modified_width = info["new_width"] - 1
-
-	pal_name = info["palette"]
-	pal = palettes[pal_name]
-	chars_count = len(chars[pal_name])
-
-	# TODO: Try to remove the list() call
-	# pxls = list(info["frame"].getdata())
-	# TODO: np.array call seems pretty slow with 0.08s as opposed to 0.01s with list()
-	pxls = np.array(info["frame"].getdata())
-
-	w = info["frame"].width
-	h = info["frame"].height
-
-	for y in range(info["height"]):
-		for x in range(modified_width): #TODO: modified_width be gone
-			cur_clr = get_clr(pxls, x, y, w)
-
-			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
-			
-			string += get_char(pal_name, char_idx)
-			
-			distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
-		
-		# TODO: why not y < h - 1?
-		if y < info["height"] - 1:
-			# add a return character to the end of each horizontal line,
-			# so ComputerCraft can draw the entire frame with one write() statement
-			string += "\\n"
-	return string
+def get_char(palette_name, char_index):
+	return chars[palette_name][char_index]

@@ -191,6 +191,11 @@ def process_frame(info):
 	# initializes empty variables for the coming "for y, for x" loop
 	prev_char = None
 	prev_char_count = 0
+	string = ""
+
+	# the \n character at the end of every line needs to have one spot reserved
+	# TODO: move this operation to the frame resizing stage
+	modified_width = info["new_width"] - 1
 
 	prepare_loop_end_time = time.time()
 
@@ -198,7 +203,18 @@ def process_frame(info):
 	pixel_loop_start_time = time.time()
 	
 	info["frame"].save("foo/" + str(info["i"]) + ".png")
-	string = char.dither_to_str(info)
+
+	new_img = info["frame"].quantize(palette=info["palette_img"], dither=True)
+	palette_name = info["palette"]
+
+	for y in range(info["height"]):
+		for x in range(modified_width):
+			# TODO: getpixel() is really slow, use getdata()
+			string += char.get_char(palette_name, new_img.getpixel((x, y)))
+		if y < info["height"] - 1:
+			# add a return character at the end of row of characters
+			# so ComputerCraft can draw the entire frame with a single write() call
+			string += "\\n"
 	
 	pixel_loop_end_time = time.time()
 

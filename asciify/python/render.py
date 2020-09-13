@@ -88,7 +88,7 @@ def main():
 						"new_width_stretched": new_width_stretched,
 						"max_bytes_per_file": max_bytes_per_file,
 						"frames_to_update_stats": frames_to_update_stats,
-						# "palette_img": char.get_palette_img(variation["palette"])
+						"palette_img": char.get_palette_img(variation["palette"])
 					}
 					extra_variations_info[variation["id"]] = processing.process_frames(info)
 
