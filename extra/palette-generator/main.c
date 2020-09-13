@@ -14,25 +14,47 @@ void	skip_rand(int n)
 
 void	generate_colors(int color_count)
 {
-	char	file_name[] = "palette-srgb.txt"
+	char	file_name[] = "palette.txt";
 	FILE	*fp_r;
 	FILE	*fp_w;
+
 	int	colors[color_count * 3];
+
 	int	i;
+
 	int	smallest_diff;
 	int	largest_diff;
+
 	int	idx1;
 	int	idx2;
-	int	clr1_r;
-	int	clr1_g;
-	int	clr1_b;
-	int	clr2_r;
-	int	clr2_g;
-	int	clr2_b;
+
+	int	r1;
+	int	g1;
+	int	b1;
+
+	int	r2;
+	int	g2;
+	int	b2;
+	
+	int	r_diff;
+	int	g_diff;
+	int	b_diff;
+	
+	int	r_diff_sq;
+	int	g_diff_sq;
+	int	b_diff_sq;
+
+	int	avg_r;
+	
+	int	r_weight;
+	int	g_weight;
+	int	b_weight;
+
 	int	diff;
 	int	gens;
 	int	j;
 	int	gens_done;
+
 	clock_t	start_t;
 	clock_t	end_t;
 	float	total_t;
@@ -106,24 +128,30 @@ void	generate_colors(int color_count)
 			{
 				if (idx1 != idx2)
 				{
-					// https://stackoverflow.com/a/56678483
-					s_r1 = colors[idx1 + 0];
-					s_g1 = colors[idx1 + 1];
-					s_b1 = colors[idx1 + 2];
+					r1 = colors[idx1 + 0];
+					g1 = colors[idx1 + 1];
+					b1 = colors[idx1 + 2];
 		
-					s_r2 = colors[idx2 + 0];
-					s_g2 = colors[idx2 + 1];
-					s_b2 = colors[idx2 + 2];
+					r2 = colors[idx2 + 0];
+					g2 = colors[idx2 + 1];
+					b2 = colors[idx2 + 2];
 
-					v_r1 = s_r1 / 255;
-					v_g1 = s_g1 / 255;
-					v_b1 = s_b1 / 255;
-		
-					diff =
-						(clr1_r - clr2_r) * (clr1_r - clr2_r) +
-						(clr1_g - clr2_g) * (clr1_g - clr2_g) +
-						(clr1_b - clr2_b) * (clr1_b - clr2_b);
-		
+					r_diff = r1 - r2;
+					g_diff = g1 - g2;
+					b_diff = b1 - b2;
+					
+					r_diff_sq = r_diff * r_diff;
+					g_diff_sq = g_diff * g_diff;
+					b_diff_sq = b_diff * b_diff;
+
+					avg_r = (r1 + r2) / 2;
+					
+					r_weight = (2 + avg_r / 256) * r_diff_sq;
+					g_weight = 4 * g_diff_sq;
+					b_weight = (2 + (255 - avg_r) / 256) * b_diff_sq;
+					
+					diff = r_weight + g_weight + b_weight;
+
 					if (diff < smallest_diff)
 						smallest_diff = diff;
 				}
