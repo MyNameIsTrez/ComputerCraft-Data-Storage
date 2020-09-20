@@ -27,15 +27,19 @@ def get_clr(pxls, x, y, w):
 
 def get_closest_pal(cur_clr, pal, chars_count):
 	smallest_dist = float("inf")
+
+	cur_r = cur_clr[0]
+	cur_g = cur_clr[1]
+	cur_b = cur_clr[2]
 	
 	for char_idx in range(chars_count):
 		pal_r = pal[char_idx * 3 + 0]
 		pal_g = pal[char_idx * 3 + 1]
 		pal_b = pal[char_idx * 3 + 2]
 		
-		diff_r = (cur_clr[0] - pal_r) ** 2
-		diff_g = (cur_clr[1] - pal_g) ** 2
-		diff_b = (cur_clr[2] - pal_b) ** 2
+		diff_r = (cur_r - pal_r) ** 2
+		diff_g = (cur_g - pal_g) ** 2
+		diff_b = (cur_b - pal_b) ** 2
 
 		dist = diff_r + diff_g + diff_b
 		
@@ -43,6 +47,9 @@ def get_closest_pal(cur_clr, pal, chars_count):
 			smallest_dist = dist
 			closest_pal_clr = (pal_r, pal_g, pal_b)
 			closest_char_idx = char_idx
+
+	# closest_pal_clr = (pal[0], pal[1], pal[2])
+	# closest_char_idx = 0
 
 	return closest_pal_clr, closest_char_idx
 
@@ -101,11 +108,12 @@ def dither_to_str(info):
 		for x in range(modified_width): #TODO: modified_width be gone
 			cur_clr = get_clr(pxls, x, y, w)
 
+			# This function is extremely slow for some reason
 			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
 			
-			string += get_char(pal_name, char_idx)
+			# string += get_char(pal_name, char_idx)
 			
-			distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
+			# distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
 		
 		# TODO: why not y < h - 1?
 		if y < info["height"] - 1:
