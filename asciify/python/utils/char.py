@@ -33,15 +33,21 @@ def get_closest_pal(cur_clr, pal, chars_count):
 	cur_b = cur_clr[2]
 	
 	for char_idx in range(chars_count):
-		pal_r = pal[char_idx * 3 + 0]
+		pal_r = pal[char_idx * 3]
 		pal_g = pal[char_idx * 3 + 1]
 		pal_b = pal[char_idx * 3 + 2]
 		
-		diff_r = (cur_r - pal_r) ** 2
-		diff_g = (cur_g - pal_g) ** 2
-		diff_b = (cur_b - pal_b) ** 2
+		r_diff = (cur_r - pal_r) ** 2
+		g_diff = (cur_g - pal_g) ** 2
+		b_diff = (cur_b - pal_b) ** 2
 
-		dist = diff_r + diff_g + diff_b
+		avg_r = (cur_r + pal_r) / 2
+
+		r_weight = (2 + avg_r / 256) * r_diff ** 2
+		g_weight = 4 * g_diff ** 2
+		b_weight = (2 + (255 - avg_r) / 256) * b_diff ** 2
+
+		dist = r_weight + g_weight + b_weight
 		
 		if dist < smallest_dist:
 			smallest_dist = dist
