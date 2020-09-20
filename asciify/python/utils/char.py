@@ -45,11 +45,8 @@ def get_closest_pal(cur_clr, pal, chars_count):
 		
 		if dist < smallest_dist:
 			smallest_dist = dist
-			closest_pal_clr = (pal_r, pal_g, pal_b)
+			closest_pal_clr = (pal_r, pal_g, pal_b, 255)
 			closest_char_idx = char_idx
-
-	# closest_pal_clr = (pal[0], pal[1], pal[2])
-	# closest_char_idx = 0
 
 	return closest_pal_clr, closest_char_idx
 
@@ -111,9 +108,9 @@ def dither_to_str(info):
 			# This function is extremely slow for some reason
 			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
 			
-			# string += get_char(pal_name, char_idx)
+			string += get_char(pal_name, char_idx)
 			
-			# distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
+			distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
 		
 		# TODO: why not y < h - 1?
 		if y < info["height"] - 1:
