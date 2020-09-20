@@ -51,7 +51,10 @@ def get_closest_pal(cur_clr, pal, chars_count):
 		
 		if dist < smallest_dist:
 			smallest_dist = dist
-			closest_pal_clr = (pal_r, pal_g, pal_b, 255)
+			if (len(cur_clr) == 3):
+				closest_pal_clr = (pal_r, pal_g, pal_b)
+			else:
+				closest_pal_clr = (pal_r, pal_g, pal_b, 255)
 			closest_char_idx = char_idx
 
 	return closest_pal_clr, closest_char_idx
@@ -70,6 +73,7 @@ def distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h):
 	add_err(pxls, err, 3, x - 1, y + 1, w, h)
 	add_err(pxls, err, 5, x    , y + 1, w, h)
 	add_err(pxls, err, 1, x + 1, y + 1, w, h)
+
 
 def add_err(pxls, err, coeff, x, y, w, h):
 	# TODO: x >= w and y >= h may cause bugs
