@@ -1,4 +1,4 @@
-from utils import char
+from utils import char_blue as char
 from PIL import Image
 
 info = {}
@@ -6,8 +6,10 @@ info = {}
 info["old_image"] = Image.open("rick_astley.png")
 
 info["palette"] = "color"
-info["height"] = 160
-info["new_width"] = 426
+
+scale = 1
+info["height"] = int(160 * scale)
+info["new_width"] = int(426 * scale)
 
 info["frame"] = info["old_image"].resize((info["new_width"] - 1, info["height"]), Image.ANTIALIAS)
 

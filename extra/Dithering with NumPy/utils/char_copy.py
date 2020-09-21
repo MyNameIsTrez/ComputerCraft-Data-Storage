@@ -15,23 +15,20 @@ chars = {
 def get_closest_pal(cur_clr, pal, chars_count):
 	smallest_dist = float("inf")
 
-	cur_r = cur_clr[0]
-	cur_g = cur_clr[1]
-	cur_b = cur_clr[2]
-
+	(cur_r, cur_g, cur_b, cur_a) = cur_clr
 	# print("cur_r: {}, cur_g: {}, cur_b: {}".format(cur_r, cur_g, cur_b))
 	
 	for char_idx in range(chars_count):
+		# print("\nchar_idx: {}".format(char_idx))
+
 		pal_r = pal[char_idx * 3]
 		pal_g = pal[char_idx * 3 + 1]
 		pal_b = pal[char_idx * 3 + 2]
-		
-		# print("\npal_r: {}, pal_g: {}, pal_b: {}".format(pal_r, pal_g, pal_b))
+		# print("pal_r: {}, pal_g: {}, pal_b: {}".format(pal_r, pal_g, pal_b))
 
 		r_diff = cur_r - pal_r
 		g_diff = cur_g - pal_g
 		b_diff = cur_b - pal_b
-
 		# print("r_diff: {}, g_diff: {}, b_diff: {}".format(r_diff, g_diff, b_diff))
 
 		avg_r = (cur_r + pal_r) / 2
@@ -47,17 +44,24 @@ def get_closest_pal(cur_clr, pal, chars_count):
 		
 		if dist < smallest_dist:
 			smallest_dist = dist
-			if (len(cur_clr) == 3):
-				closest_pal_clr = (pal_r, pal_g, pal_b)
-			else:
-				closest_pal_clr = (pal_r, pal_g, pal_b, 255)
 			closest_char_idx = char_idx
+			
+			if (len(cur_clr) == 3):
+				# closest_pal_clr = np.array([pal_r, pal_g, pal_b]).astype(np.uint8)
+				closest_pal_clr = np.array([pal_r, pal_g, pal_b])
+			else:
+				# closest_pal_clr = np.array([pal_r, pal_g, pal_b, 255]).astype(np.uint8)
+				closest_pal_clr = np.array([pal_r, pal_g, pal_b, 255])
 
 	return closest_pal_clr, closest_char_idx
 
 
 def distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h):
-	err = np.subtract(cur_clr, closest_pal_clr)
+	# print("cur_clr dtype: {}".format(cur_clr.dtype))
+	# print("closest_pal_clr dtype: {}".format(closest_pal_clr.dtype))
+	# err = np.subtract(cur_clr, closest_pal_clr)
+	err = cur_clr - closest_pal_clr
+	# print("err dtype: {}".format(err.dtype))
 	
 	add_err(pxls, err, 7, x + 1, y    , w, h)
 	add_err(pxls, err, 3, x - 1, y + 1, w, h)
@@ -69,9 +73,12 @@ def add_err(pxls, err, coeff, x, y, w, h):
 	if x < 0 or x >= w or y < 0 or y >= h:
 		return
 	
-	cur_clr = pxls[y, x]
-	new_clr = cur_clr + err * coeff / 16
-	pxls[y, x] = new_clr
+	# numpy.core._exceptions.UFuncTypeError: Cannot cast ufunc 'add' output from dtype('float64') to dtype('uint8') with casting rule 'same_kind'
+	# pxls[y, x] += err * coeff / 16
+
+	pxls[y, x] = pxls[y, x] + err * int(coeff / 16)
+	# print("pxls[y, x] dtype: {}".format(pxls[y, x].dtype))
+	# print("err dtype: {}".format(err.dtype))
 
 
 def dither_frame(info):
@@ -92,13 +99,14 @@ def dither_frame(info):
 	for y in range(info["height"]):
 		for x in range(modified_width):
 			# print("\n\n\nx :{}, y: {}".format(x, y))
+
 			cur_clr = pxls[y, x]
-
-			# print("foo")
-			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
 			# print("cur_clr: {}".format(cur_clr))
+			
+			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
+			# print("foo")
 
-			dithered_frame.putpixel((x, y), closest_pal_clr)
+			dithered_frame.putpixel((x, y), tuple(closest_pal_clr))
 
 			distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
 
