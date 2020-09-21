@@ -16,15 +16,6 @@ chars = {
 }
 
 
-def get_idx(x, y, w):
-	return x + y * w
-
-
-def get_clr(pxls, x, y, w):
-	i = get_idx(x, y, w)
-	return pxls[i]
-
-
 def get_closest_pal(cur_clr, pal, chars_count):
 	smallest_dist = float("inf")
 
@@ -60,11 +51,6 @@ def get_closest_pal(cur_clr, pal, chars_count):
 	return closest_pal_clr, closest_char_idx
 
 
-def set_clr(pxls, clr, x, y, w):
-	i = get_idx(x, y, w)
-	pxls[i] = clr
-
-
 def distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h):
 	# TODO: This can just be a - when closest_pal_clr is a np array
 	err = np.subtract(cur_clr, closest_pal_clr)
@@ -80,9 +66,9 @@ def add_err(pxls, err, coeff, x, y, w, h):
 	if x < 0 or x >= w or y < 0 or y >= h:
 		return
 	
-	cur_clr = get_clr(pxls, x, y, w)
+	cur_clr = pxls[y, x]
 	new_clr = cur_clr + err * coeff / 16
-	set_clr(pxls, new_clr, x, y, w)
+	pxls[y, x] = new_clr
 
 
 def get_char(pal_name, char_idx):
@@ -106,22 +92,22 @@ def dither_to_str(info):
 	# TODO: Try to remove the list() call
 	# pxls = list(info["frame"].getdata())
 	# TODO: np.array call seems pretty slow with 0.08s as opposed to 0.01s with list()
-	pxls = np.array(info["frame"].getdata())
+	pxls = np.array(info["frame"])
 
 	w = info["frame"].width
 	h = info["frame"].height
 
 	for y in range(info["height"]):
 		for x in range(modified_width): #TODO: modified_width be gone
-			cur_clr = get_clr(pxls, x, y, w)
+			cur_clr = pxls[y, x]
 
 			# This function is extremely slow for some reason
 			closest_pal_clr, char_idx = get_closest_pal(cur_clr, pal, chars_count)
-			
+
 			string += get_char(pal_name, char_idx)
-			
+
 			distribute_err(pxls, cur_clr, closest_pal_clr, x, y, w, h)
-		
+
 		# TODO: why not y < h - 1?
 		if y < info["height"] - 1:
 			# add a return character to the end of each horizontal line,
