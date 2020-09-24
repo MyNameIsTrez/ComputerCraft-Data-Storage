@@ -1,5 +1,5 @@
 # ComputerCraft-Data-Storage
-This is a project for converting real-life videos and images to ASCII (text), so they can be viewed within Minecraft's ComputerCraft mod.
+This project converts real-life videos and images to an ASCII (text) format, so they can be viewed within the terminal of Minecraft's ComputerCraft mod.
 
 ## Examples
 
