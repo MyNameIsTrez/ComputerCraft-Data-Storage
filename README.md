@@ -11,12 +11,12 @@ The gif below has been heavily compressed by giphy, but it's also made up of onl
 
 ## Explanation
 
-If you include the space character, only 20 unique characters are used by these ASCII files:
+Only 20 characters are used by these ASCII files:
 
 ` `, `.`, `'`, `:`, `-`, `!`, `/`, `(`, `=`, `%`, `1`, `C`, `3`, `$`, `2`, `5`, `A`, `0`, `#`, `@`
 
-They have been sorted by the number of pixels each character fills on the screen with ComputerCraft's font.
-Since there are only 20 unique numbers of pixels per character, all the other characters were 'identical' and have been omitted.
+They have been sorted by the number of pixels each character has in ComputerCraft's terminal font.
+Since there are only 20 characters with a unique number of pixels, all the other characters have been omitted.
 
 ## Getting Started
 
