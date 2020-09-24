@@ -45,12 +45,22 @@ Changing this font does have the downside of making *everything* inside of Minec
 
 At first, a particle simulation was used where 94 particles repelled each other, and wherever the particles ended up in the 3D space would determine the RGB color of that particle. I couldn't get that to work completely as the particles didn't approach the maximum distances between each other, so I scrapped that concept. I will probably retry this concept in the future, as I suspect it could be the fastest approach, and it should create the best palette of 94 colors.
 
-Then, the palette was generated with a JavaScript program that generates a set of 94 random colors. It then checks the "score" of the palette by looking for the smallest distance between all combinations of two pairs of colors, with the logic being that if the smallest distance is really large, the palette consists of a lot of visually unique colors.
+Then, the palette was generated with a JavaScript program that generates a set of 94 random colors. It then calculates the "score" of the palette by looking for the smallest distance between all possible combinations of two colors, with the logic being that if the smallest distance found is larger than that of any other palette, the palette has a lot of variance, which means a lot of visually unique colors. The distance between two colors is given with the Pythagorean theorem (Euclidean distance):
+
+`(color1_r - color2_r) ** 2 + (color1_g - color2_g) ** 2 + (color1_b - color2_b) ** 2`
 
 This program was then rewritten in C, because I assumed the algorithm would execute faster in C, but I haven't benchmarked the JS or C program yet to confirm or deny this. This C program ran on my server for about 8 hours, but I stopped the program after that time because it took 3 hours and millions of randomly generated palettes to find a palette that was slightly better. This program had O(N^2) complexity, which could have been optimized with a k-d tree to do nearest-neighbour searches with, but the chances of this program getting really close to the optimal palette are so incredibly small that it'd be better using a totally different approach.
 
-The Wikipedia page on Color Difference explains the "Redmean" algorithm, which is currently being used:
-https://en.wikipedia.org/wiki/Color_difference#Euclidean
+The [Wikipedia page on Color Difference](https://en.wikipedia.org/wiki/Color_difference#Euclidean) discusses how the human vision isn't equally sensitive to the colors red, green and blue, which means that a simple euclidean distance between two colors isn't accurate to how the humans perceive color differences. The article also discusses many alternative distance functions which can be used to approximate the distance much more accurately. The "redmean" algorithm discussed there seemed like an easy to implement, much better algorithm, so that's what the C palette generator and Python video converter programs currently use for calculating the distance between two colors:
+
+![Alt Text](https://wikimedia.org/api/rest_v1/media/math/render/svg/41684f5a5dd515420fdc46c05f75d2b7efdc6045)
+
+![Alt Text](https://wikimedia.org/api/rest_v1/media/math/render/svg/2e9018b3d7c1c1e622cc8d68a49cf208945bbfb2)
+
+## Dependencies
+
+* Run `pip install -r requirements.txt` to install all the Python dependencies automatically.
+* Run `npm install` to install all the JavaScript dependencies automatically.
 
 ## Getting Started
 
@@ -58,8 +68,3 @@ https://en.wikipedia.org/wiki/Color_difference#Euclidean
 * Change your directory to the folder `asciify` and run `node server.js`, this will start a server.
 * ComputerCraft will now be able to send that server some URLs of videos/images to convert, along with any other custom metadata like the name, author, etc. This will all be handled and hidden from the user by the BackWardsOS program for ComputerCraft, which will be published and linked in this repository in the future.
 * BackWardsOS will then be able to request ASCII videos/images from the server and view them.
-
-## Dependencies
-
-* Run `pip install -r requirements.txt` to install all the Python dependencies automatically.
-* Run `npm install` to install all the JavaScript dependencies automatically.
