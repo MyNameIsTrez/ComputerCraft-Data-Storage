@@ -30,7 +30,7 @@ Since there are only 20 characters with a unique number of white pixels, the oth
 ## How do the colored examples work?
 
 There are 94 available characters in ComputerCraft's terminal, but only 20 of those have a unique number of white pixels.
-If you head to `%appdata%/.technic/tekkit/bin` (Windows) and unzip `minecraft.jar`, you'll find this image at `font/default.png`:
+If you head to `%appdata%/.technic/tekkit/bin` (Windows) and unzip `minecraft.jar`, you'll find this image at `font/default.png` (the background has been colored black by me):
 
 ![Alt Text](https://i.imgur.com/QEpIybU.png)
 
