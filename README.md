@@ -34,7 +34,8 @@ If you head to `%appdata%/.technic/tekkit/bin` (Windows) and unzip `minecraft.ja
 
 ![Alt Text](https://i.imgur.com/QEpIybU.png)
 
-This image is the font that Minecraft uses to display text. ComputerCraft also uses this font for its terminal text, so by carefully editing this image, it's possible to assign each of the 94 usable characters in ComputerCraft to any RGB color.
+This image is the font that Minecraft uses to display text. ComputerCraft also uses this font for its terminal text, so by carefully editing this image, it's possible to assign each of the 94 usable characters in ComputerCraft to any RGB color:
+
 ![Alt Text](https://i.imgur.com/WLWlmiw.png)
 
 Changing this font does have the downside of making *everything* inside of Minecraft unreadable, so it's advised to switch back to the regular font when you're done viewing the videos/images.
@@ -44,7 +45,12 @@ Changing this font does have the downside of making *everything* inside of Minec
 
 At first, a particle simulation was used where 94 particles repelled each other, and wherever the particles ended up in the 3D space would determine the RGB color of that particle. I couldn't get that to work completely as the particles didn't approach the maximum distances between each other, so I scrapped that concept. I will probably retry this concept in the future, as I suspect it could be the fastest approach, and it should create the best palette of 94 colors.
 
-Then, the palette was generated with a JavaScript program that generates a set of 94 random colors. It then checks the "score" of the palette by looking for the smallest distance between all combinations of two pairs of colors, with the logic being that if the smallest distance is really large, the palette consists of a lot of visually unique colors. This program had O(N^2) complexity, which could have been optimized with a k-d tree to do nearest-neighbour searches with.
+Then, the palette was generated with a JavaScript program that generates a set of 94 random colors. It then checks the "score" of the palette by looking for the smallest distance between all combinations of two pairs of colors, with the logic being that if the smallest distance is really large, the palette consists of a lot of visually unique colors.
+
+This program was then rewritten in C, because I assumed the algorithm would execute faster in C, but I haven't benchmarked the JS or C program yet to confirm or deny this. This C program ran on my server for about 8 hours, but I stopped the program after that time because it took 3 hours and millions of randomly generated palettes to find a palette that was slightly better. This program had O(N^2) complexity, which could have been optimized with a k-d tree to do nearest-neighbour searches with, but the chances of this program getting really close to the optimal palette are so incredibly small that it'd be better using a totally different approach.
+
+The Wikipedia page on Color Difference explains the "Redmean" algorithm, which is currently being used:
+https://en.wikipedia.org/wiki/Color_difference#Euclidean
 
 ## Getting Started
 
