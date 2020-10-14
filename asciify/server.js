@@ -3,6 +3,8 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const Datastore = require("nedb")
 const { spawn } = require("child_process")
+const WebSocket = require("ws")
+
 
 const app = express()
 // TODO: Might want to remove "0.0.0.0", because I don't know if it does anything atm,
@@ -137,5 +139,36 @@ app.post("/get-ascii-subfile", (req, res) => {
 
 app.get("/test-res-end", (req, res) => res.end());
 app.get("/test-res-send", (req, res) => res.send("foo!"));
+app.get("/test-res-send-random", (req, res) => res.send(Math.random().toString()));
 
 app.post("/mirror-message", (req, res) => res.send(req.body));
+
+
+
+
+
+
+const socketServer = new WebSocket.Server({port: 3030});
+
+socketServer.on("connection", (socketClient) => {
+	console.log("Created connection");
+	console.log("Connected clients: ", socketServer.clients.size);
+	
+	socketClient.on("close", (socketClient) => {
+		console.log("Closed connection");
+		console.log("Connected client: ", socketServer.clients.size);
+	});
+});
+
+
+/*
+// Connection opened
+socket.addEventListener('open', function (event) {
+    socket.send('Hello Server!');
+});
+
+// Listen for messages
+socket.addEventListener('message', function (event) {
+    console.log('Message from server ', event.data);
+});
+*/
