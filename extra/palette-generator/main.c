@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 
-int getSmallestDiff(int desiredCircleCount, int colors[]) {
+int getScore(int desiredCircleCount, int circles[]) {
 	int smallestDiff = INT_MAX;
 
 	int r1, g1, b1, r2, g2, b2;
@@ -15,13 +15,13 @@ int getSmallestDiff(int desiredCircleCount, int colors[]) {
 
 	for (int i = 0; i < (desiredCircleCount - 1) * 3; i += 3) {
 		for (int j = i + 1; j < desiredCircleCount * 3; j += 3) {
-			r1 = colors[i + 0];
-			g1 = colors[i + 1];
-			b1 = colors[i + 2];
+			r1 = circles[i + 0];
+			g1 = circles[i + 1];
+			b1 = circles[i + 2];
 
-			r2 = colors[j + 0];
-			g2 = colors[j + 1];
-			b2 = colors[j + 2];
+			r2 = circles[j + 0];
+			g2 = circles[j + 1];
+			b2 = circles[j + 2];
 
 			rDiff = r1 - r2;
 			gDiff = g1 - g2;
@@ -49,23 +49,35 @@ int getSmallestDiff(int desiredCircleCount, int colors[]) {
 }
 
 int main(void) {
+	// CONFIGURABLE
 	int desiredCircleCount = 94;
+	int w = 256;
+	int h = 256;
 	char fileName[] = "palette.txt";
 	
-	FILE *fpw;
-	
-	clock_t startTime, endTime;
-	float totalTime;
+
+	// NOT CONFIGURABLE
+	int cellCount = w * h;
+	int arr1[cellCount];
+	int arr2[cellCount];
 	
 	int circlesPlaced;
 	int circlesPlacedTotal;
 
-	int colors[desiredCircleCount * 3];
+	int open;
+	int circles[desiredCircleCount * 3];
+	int diameter = 0;
+	int score;
+	int highScore = 0;
+	int recordCircles[desiredCircleCount * 3];
+	FILE *fpw;
+	
+	clock_t startTime, endTime;
+	float totalTime;
 
-	int smallestDiff, largestDiff;
 
-	// TODO: Read largestDiff from file and use that as a starting point.
-	largestDiff = 0;
+	// TODO: Read highScore from file and use that as a starting point.
+	highScore = 0;
 	
 	FILE *fpr = fopen(fileName, "r");
 	if (fpr != NULL) {
@@ -92,13 +104,13 @@ int main(void) {
 			circlesPlacedTotal++;
 		}
 
-		smallestDiff = getSmallestDiff(desiredCircleCount, colors);
+		score = getScore(desiredCircleCount, circles);
 
-		if (smallestDiff > largestDiff) {
+		if (score > highScore) {
 			endTime = clock();
 			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
 			
-			largestDiff = smallestDiff;
+			highScore = score;
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
@@ -106,13 +118,13 @@ int main(void) {
 			}
 
 			fprintf(fpw, "%d\n", circlesPlacedTotal);
-			fprintf(fpw, "%d\n", smallestDiff);
+			fprintf(fpw, "%d\n", score);
 			fprintf(fpw, "%f\n", totalTime);
 
-			printf("%d score after %d circles were placed in total, found after %f seconds\n", smallestDiff, circlesPlacedTotal, totalTime);
+			printf("%d score after %d circles were placed in total, found after %f seconds\n", score, circlesPlacedTotal, totalTime);
 
 			for (j = 0; j < desiredCircleCount * 3; j++) {
-				fprintf(fpw, "%d", colors[j]);
+				fprintf(fpw, "%d", circles[j]);
 				if (j != desiredCircleCount * 3 - 1) {
 					fprintf(fpw, ", ");
 				}
