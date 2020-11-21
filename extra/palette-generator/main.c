@@ -4,29 +4,30 @@
 #include <time.h>
 #include <math.h>
 
-int getScore(const int desiredCircleCount, int circles[]) {
-	int smallestDiff = INT_MAX;
+double getScore(const int desiredCircleCount, int circles[]) {
+	double smallestDiff = INT_MAX;
 
-	int r1, g1, b1, r2, g2, b2;
-	/*
-	int rDiff, gDiff, bDiff;
-	int rDiffSq, gDiffSq, bDiffSq;
-	int rAvg;
-	*/
-	int rWeight = 1, gWeight = 1, bWeight = 1;
-	int diff;
+	double r1, g1, b1, r2, g2, b2;
+	
+	double rDiff, gDiff, bDiff;
+	double rDiffSq, gDiffSq, bDiffSq;
+	
+	double rAvg;
+	
+	double rWeight, gWeight, bWeight;
+	double diff;
 
-	for (int i = 0; i < (desiredCircleCount - 1) * 3; i += 3) {
-		for (int j = i + 1; j < desiredCircleCount * 3; j += 3) {
-			r1 = circles[i + 0];
-			g1 = circles[i + 1];
-			b1 = circles[i + 2];
+	for (int i = 0; i < desiredCircleCount - 1; i++) {
+		for (int j = i + 1; j < desiredCircleCount; j++) {
+			r1 = circles[i * 3 + 0];
+			g1 = circles[i * 3 + 1];
+			b1 = circles[i * 3 + 2];
 
-			r2 = circles[j + 0];
-			g2 = circles[j + 1];
-			b2 = circles[j + 2];
+			r2 = circles[j * 3 + 0];
+			g2 = circles[j * 3 + 1];
+			b2 = circles[j * 3 + 2];
 
-			/*
+			
 			rDiff = r1 - r2;
 			gDiff = g1 - g2;
 			bDiff = b1 - b2;
@@ -40,13 +41,13 @@ int getScore(const int desiredCircleCount, int circles[]) {
 			rWeight = (2 + rAvg / 256) * rDiffSq;
 			gWeight = 4 * gDiffSq;
 			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq;
+			
+			/*
+			// Simple euclidean distance. Doesn't reflect how eyes work.
+			rWeight = (r1 - r2) * (r1 - r2);
+			gWeight = (g1 - g2) * (g1 - g2);
+			bWeight = (b1 - b2) * (b1 - b2);
 			*/
-
-			for (int i = 0; i < 3; i++) {
-				rWeight *= (r1 - r2);
-				gWeight *= (g1 - g2);
-				bWeight *= (b1 - b2);
-			}
 
 			diff = rWeight + gWeight + bWeight;
 
@@ -56,7 +57,6 @@ int getScore(const int desiredCircleCount, int circles[]) {
 		}	
 	}
 
-	printf("smallestDiff: %d\n", smallestDiff);
 	return smallestDiff;
 }
 
@@ -109,12 +109,14 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
-	const int my = i / w;
+	const int my = (i / w) % h;
 	const int mz = i / (w * h);
 
 	circles[circlesPlaced * 3 + 0] = mx;
 	circles[circlesPlaced * 3 + 1] = my;
 	circles[circlesPlaced * 3 + 2] = mz;
+
+	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
 	const int radius = diameter;
 
@@ -175,6 +177,7 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 int main(void) {
 	// CONFIGURABLE
 	const int desiredCircleCount = 94;
+
 	const int w = 256;
 	const int h = 256;
 	const int d = 256;
@@ -195,11 +198,13 @@ int main(void) {
 	int open;
 	int circles[desiredCircleCount * 3];
 	int diameter = 0;
-	int score;
-	int highScore = 0;
+
+	double score;
+
+	double highScore = 0;
 	FILE *fpw;
 	FILE *fpr;
-	
+
 	clock_t startTime, endTime;
 	float totalTime;
 
@@ -234,11 +239,10 @@ int main(void) {
 		score = getScore(desiredCircleCount, circles);
 
 		if (score > highScore) {
-			printf("highscore!");
 			endTime = clock();
 			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
 			
-			diameter = (int)(sqrt(score));
+			diameter = sqrt(score);
 			highScore = score;
 
 			fpw = fopen(fileName, "w");
@@ -247,10 +251,10 @@ int main(void) {
 			}
 
 			fprintf(fpw, "%d\n", circlesPlacedTotal);
-			fprintf(fpw, "%d\n", score);
+			fprintf(fpw, "%f\n", score);
 			fprintf(fpw, "%f\n", totalTime);
 
-			printf("%d score after %d circles were placed in total, found after %f seconds\n", score, circlesPlacedTotal, totalTime);
+			printf("%f score with a diameter of %d after %d circles were placed in total, found after %f seconds from the start\n", score, diameter, circlesPlacedTotal, totalTime);
 
 			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);
