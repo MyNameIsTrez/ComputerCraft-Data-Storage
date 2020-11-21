@@ -2,8 +2,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
+#include <math.h>
 
-int getScore(int desiredCircleCount, int circles[]) {
+int getScore(const int desiredCircleCount, int circles[]) {
 	int smallestDiff = INT_MAX;
 
 	int r1, g1, b1, r2, g2, b2;
@@ -48,16 +49,101 @@ int getScore(int desiredCircleCount, int circles[]) {
 	return smallestDiff;
 }
 
+void close(const int x, const int y, const int w, const int h, int *open, int arr1[], int arr2[]) {
+	if (x >= 0 && x < w && y >= 0 && y < h) {
+		const int n1 = x + y * w;
+
+		if (n1 >= 0) { // TODO: If-statement is probably redundant.
+			const int arr1i1 = arr2[n1];
+			
+			if (arr1i1 < *open - 1) {
+				const int arr1i2 = *open - 1;
+				const int n2 = arr1[arr1i2];
+
+				// arr1 editing
+				arr1[arr1i1] = n2;
+				arr1[arr1i2] = n1;
+
+				// arr2 editing
+				arr2[n1] = arr1i2;
+				arr2[n2] = arr1i1;
+
+				(*open)--;
+			} else if (arr1i1 == *open - 1) {
+				(*open)--;
+			} else {} // When it's already been removed.
+		}
+	}
+}
+
+void reset(const int cellCount, int arr1[], int arr2[], int *circlesPlaced, int *open) {
+	for (int i = 0; i < cellCount; i++) {
+		arr1[i] = i;
+		arr2[i] = i;
+	}
+	*circlesPlaced = 0;
+	*open = cellCount;
+}
+
+double rand01(void) {
+	return rand() / ((double) RAND_MAX);
+}
+
+int getRandomOpen(int arr1[], const int *open) {
+	return arr1[(int)(rand01() * (*open))];
+}
+
+// TODO: Check Wikipedia page to see if this implementation is correct.
+// https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
+// https://stackoverflow.com/a/14976268/13279557
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int diameter, int circles[], int circlesPlaced) {
+	const int i = getRandomOpen(arr1, open);
+
+	const int x0 = i % w;
+	const int y0 = i / w;
+	const int radius = diameter;
+
+	circles[circlesPlaced * 2] = x0;
+	circles[circlesPlaced * 2 + 1] = y0;
+
+	int x = radius;
+	int y = 0;
+	int xChange = 1 - (radius << 1); // TODO: Is the automatic cast to int unwanted?
+	int yChange = 0;
+	int radiusError = 0;
+
+	while (x >= y) {
+		for (int i = x0 - x; i <= x0 + x; i++) {
+			close(i, y0 + y, w, h, open, arr1, arr2);
+			close(i, y0 - y, w, h, open, arr1, arr2);
+		}
+		for (int i = x0 - y; i <= x0 + y; i++) {
+			close(i, y0 + x, w, h, open, arr1, arr2);
+			close(i, y0 - x, w, h, open, arr1, arr2);
+		}
+
+		y++;
+		radiusError += yChange;
+		yChange += 2;
+		
+		if (((radiusError << 1) + xChange) > 0) {
+			x--;
+			radiusError += xChange;
+			xChange += 2;
+		}
+	}
+}
+
 int main(void) {
 	// CONFIGURABLE
-	int desiredCircleCount = 94;
-	int w = 256;
-	int h = 256;
-	char fileName[] = "palette.txt";
+	const int desiredCircleCount = 94;
+	const int w = 256;
+	const int h = 256;
+	const char fileName[] = "palette.txt";
 	
 
 	// NOT CONFIGURABLE
-	int cellCount = w * h;
+	const int cellCount = w * h;
 	int arr1[cellCount];
 	int arr2[cellCount];
 	
@@ -69,7 +155,6 @@ int main(void) {
 	int diameter = 0;
 	int score;
 	int highScore = 0;
-	int recordCircles[desiredCircleCount * 3];
 	FILE *fpw;
 	
 	clock_t startTime, endTime;
@@ -91,17 +176,16 @@ int main(void) {
 	startTime = clock();
 
 	while (1) {
-		// TODO: Put this in a "reset" function.
-		for (int i = 0; i < cellCount; i++) {
-			arr1[i] = i;
-			arr2[i] = i;
-		}
-		circlesPlaced = 0;
-		open = cellCount;
+		reset(cellCount, arr1, arr2, &circlesPlaced, &open);
 
 		while (circlesPlaced < desiredCircleCount) {
-			circlesPlaced++;
-			circlesPlacedTotal++;
+			if (open > 0) {
+				placeCircle(arr1, arr2, &open, w, h, diameter, circles, circlesPlaced);
+				circlesPlaced++;
+				circlesPlacedTotal++;
+			} else { // This will probably never happen.
+				reset(cellCount, arr1, arr2, &circlesPlaced, &open);
+			}
 		}
 
 		score = getScore(desiredCircleCount, circles);
@@ -110,6 +194,7 @@ int main(void) {
 			endTime = clock();
 			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
 			
+			diameter = (int)(sqrt(score));
 			highScore = score;
 
 			fpw = fopen(fileName, "w");
@@ -123,7 +208,7 @@ int main(void) {
 
 			printf("%d score after %d circles were placed in total, found after %f seconds\n", score, circlesPlacedTotal, totalTime);
 
-			for (j = 0; j < desiredCircleCount * 3; j++) {
+			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);
 				if (j != desiredCircleCount * 3 - 1) {
 					fprintf(fpw, ", ");
