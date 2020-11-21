@@ -21,36 +21,20 @@ void	generate_colors(int color_count)
 
 	int	colors[color_count * 3];
 
-	int	i;
+	double	smallest_diff;
+	double	largest_diff;
 
-	int	smallest_diff;
-	int	largest_diff;
-
-	int	r1;
-	int	g1;
-	int	b1;
-
-	int	r2;
-	int	g2;
-	int	b2;
+	double	r1, g1, b1, r2, g2, b2;
 	
-	int	r_diff;
-	int	g_diff;
-	int	b_diff;
-	
-	int	r_diff_sq;
-	int	g_diff_sq;
-	int	b_diff_sq;
+	double	r_diff, g_diff, b_diff;
+	double	r_diff_sq, g_diff_sq, b_diff_sq;
 
-	int	avg_r;
+	double	avg_r;
 	
-	int	r_weight;
-	int	g_weight;
-	int	b_weight;
+	double	r_weight, g_weight, b_weight;
+	double	diff;
 
-	int	diff;
 	int	gens;
-	int	j;
 	int	gens_done;
 
 	clock_t	start_t;
@@ -108,24 +92,21 @@ void	generate_colors(int color_count)
 
 	while (1)
 	{
-		i = 8 * 3;
-		while (i < color_count * 3)
-		{
-			colors[i] = rand() % 256;
-			i++;
+		for (int k = 8 * 3; k < color_count * 3; k++) {
+			colors[k] = rand() % 256;
 		}
 
 		smallest_diff = INT_MAX;
 
-		for (int i = 0; i < (color_count - 1) * 3; i+=3) {
-			for (int j = i + 3; j < color_count * 3; j+=3) {
-				r1 = colors[i + 0];
-				g1 = colors[i + 1];
-				b1 = colors[i + 2];
+		for (int i = 0; i < color_count - 1; i++) {
+			for (int j = i + 1; j < color_count; j++) {
+				r1 = colors[i * 3 + 0];
+				g1 = colors[i * 3 + 1];
+				b1 = colors[i * 3 + 2];
 	
-				r2 = colors[j + 0];
-				g2 = colors[j + 1];
-				b2 = colors[j + 2];
+				r2 = colors[j * 3 + 0];
+				g2 = colors[j * 3 + 1];
+				b2 = colors[j * 3 + 2];
 
 				r_diff = r1 - r2;
 				g_diff = g1 - g2;
@@ -143,8 +124,9 @@ void	generate_colors(int color_count)
 				
 				diff = r_weight + g_weight + b_weight;
 
-				if (diff < smallest_diff)
+				if (diff < smallest_diff) {
 					smallest_diff = diff;
+				}
 			}
 		}
 	
@@ -155,22 +137,21 @@ void	generate_colors(int color_count)
 			
 			largest_diff = smallest_diff;
 
-			if ((fp_w = fopen(file_name, "w")) == NULL)
+			if ((fp_w = fopen(file_name, "w")) == NULL) {
 				printf("Error getting write handle.");
+			}
 
 			fprintf(fp_w, "%d\n", gens);
-			fprintf(fp_w, "%d\n", smallest_diff);
+			fprintf(fp_w, "%f\n", smallest_diff);
 			fprintf(fp_w, "%f\n", total_t);
 
-			printf("%d score with a diameter of %d after %d circles were placed in total, found after %f seconds from the start\n", smallest_diff, (int)sqrt(smallest_diff), gens * color_count, total_t);
+			printf("%f score with a diameter of %d after %d circles were placed in total, found after %f seconds from the start\n", smallest_diff, (int)sqrt(smallest_diff), gens * color_count, total_t);
 
-			j = 0;
-			while (j < color_count * 3)
-			{
+			for (int j = 0; j < color_count * 3; j++) {
 				fprintf(fp_w, "%d", colors[j]);
-				if (j != color_count * 3 - 1)
+				if (j != color_count * 3 - 1) {
 					fprintf(fp_w, ", ");
-				j++;
+				}
 			}
 
 			fclose(fp_w);
