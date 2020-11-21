@@ -8,10 +8,12 @@ int getScore(const int desiredCircleCount, int circles[]) {
 	int smallestDiff = INT_MAX;
 
 	int r1, g1, b1, r2, g2, b2;
+	/*
 	int rDiff, gDiff, bDiff;
 	int rDiffSq, gDiffSq, bDiffSq;
 	int rAvg;
-	int rWeight, gWeight, bWeight;
+	*/
+	int rWeight = 1, gWeight = 1, bWeight = 1;
 	int diff;
 
 	for (int i = 0; i < (desiredCircleCount - 1) * 3; i += 3) {
@@ -24,6 +26,7 @@ int getScore(const int desiredCircleCount, int circles[]) {
 			g2 = circles[j + 1];
 			b2 = circles[j + 2];
 
+			/*
 			rDiff = r1 - r2;
 			gDiff = g1 - g2;
 			bDiff = b1 - b2;
@@ -37,7 +40,14 @@ int getScore(const int desiredCircleCount, int circles[]) {
 			rWeight = (2 + rAvg / 256) * rDiffSq;
 			gWeight = 4 * gDiffSq;
 			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq;
-			
+			*/
+
+			for (int i = 0; i < 3; i++) {
+				rWeight *= (r1 - r2);
+				gWeight *= (g1 - g2);
+				bWeight *= (b1 - b2);
+			}
+
 			diff = rWeight + gWeight + bWeight;
 
 			if (diff < smallestDiff) {
@@ -46,12 +56,13 @@ int getScore(const int desiredCircleCount, int circles[]) {
 		}	
 	}
 
+	printf("smallestDiff: %d\n", smallestDiff);
 	return smallestDiff;
 }
 
-void close(const int x, const int y, const int w, const int h, int *open, int arr1[], int arr2[]) {
-	if (x >= 0 && x < w && y >= 0 && y < h) {
-		const int n1 = x + y * w;
+void close(const int x, const int y, const int z, const int w, const int h, const int d, int *open, int arr1[], int arr2[]) {
+	if (x >= 0 && x < w && y >= 0 && y < h && z >= 0 && z < d) {
+		const int n1 = x + y * w + z * (w * h);
 
 		if (n1 >= 0) { // TODO: If-statement is probably redundant.
 			const int arr1i1 = arr2[n1];
@@ -93,18 +104,43 @@ int getRandomOpen(int arr1[], const int *open) {
 	return arr1[(int)(rand01() * (*open))];
 }
 
+// Find faster algorithm, because this checks every cell in a cube.
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int diameter, int circles[], int circlesPlaced) {
+	const int i = getRandomOpen(arr1, open);
+
+	const int mx = i % w;
+	const int my = i / w;
+	const int mz = i / (w * h);
+
+	circles[circlesPlaced * 3 + 0] = mx;
+	circles[circlesPlaced * 3 + 1] = my;
+	circles[circlesPlaced * 3 + 2] = mz;
+
+	const int radius = diameter;
+
+	for(int z=-radius; z<=radius; z++)
+		for(int y=-radius; y<=radius; y++)
+			for(int x=-radius; x<=radius; x++)
+				if(x*x+y*y+z*z <= radius*radius*radius)
+					close(mx+x, my+y, mz+z, w, h, d, open, arr1, arr2);
+}
+
 // TODO: Check Wikipedia page to see if this implementation is correct.
 // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
 // https://stackoverflow.com/a/14976268/13279557
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int diameter, int circles[], int circlesPlaced) {
+/*
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int diameter, int circles[], int circlesPlaced) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int x0 = i % w;
 	const int y0 = i / w;
-	const int radius = diameter;
+	const int z0 = i / (w * h);
 
-	circles[circlesPlaced * 2] = x0;
-	circles[circlesPlaced * 2 + 1] = y0;
+	circles[circlesPlaced * 3 + 0] = x0;
+	circles[circlesPlaced * 3 + 1] = y0;
+	circles[circlesPlaced * 3 + 2] = z0;
+
+	const int radius = diameter;
 
 	int x = radius;
 	int y = 0;
@@ -114,12 +150,13 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 
 	while (x >= y) {
 		for (int i = x0 - x; i <= x0 + x; i++) {
-			close(i, y0 + y, w, h, open, arr1, arr2);
-			close(i, y0 - y, w, h, open, arr1, arr2);
+			// TODO: REWRITE THIS WHOLE FUNCTION SO IT'S FOR 3D
+			close(i, y0 + y, z, w, h, d, open, arr1, arr2);
+			close(i, y0 - y, z, w, h, d, open, arr1, arr2);
 		}
 		for (int i = x0 - y; i <= x0 + y; i++) {
-			close(i, y0 + x, w, h, open, arr1, arr2);
-			close(i, y0 - x, w, h, open, arr1, arr2);
+			close(i, y0 + x, z, w, h, d, open, arr1, arr2);
+			close(i, y0 - x, z, w, h, d, open, arr1, arr2);
 		}
 
 		y++;
@@ -133,19 +170,24 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 		}
 	}
 }
+*/
 
 int main(void) {
 	// CONFIGURABLE
 	const int desiredCircleCount = 94;
 	const int w = 256;
 	const int h = 256;
+	const int d = 256;
 	const char fileName[] = "palette.txt";
-	
+
 
 	// NOT CONFIGURABLE
-	const int cellCount = w * h;
-	int arr1[cellCount];
-	int arr2[cellCount];
+	const int cellCount = w * h * d;
+	
+	int *arr1;
+	int *arr2;
+	arr1 = malloc(cellCount * sizeof(int));
+	arr2 = malloc(cellCount * sizeof(int));
 	
 	int circlesPlaced;
 	int circlesPlacedTotal;
@@ -156,6 +198,7 @@ int main(void) {
 	int score;
 	int highScore = 0;
 	FILE *fpw;
+	FILE *fpr;
 	
 	clock_t startTime, endTime;
 	float totalTime;
@@ -164,13 +207,13 @@ int main(void) {
 	// TODO: Read highScore from file and use that as a starting point.
 	highScore = 0;
 	
-	FILE *fpr = fopen(fileName, "r");
+	fpr = fopen(fileName, "r");
 	if (fpr != NULL) {
 		fscanf(fpr, "%d", &circlesPlacedTotal);
+		fclose(fpr);
 	} else {
 		circlesPlacedTotal = 0;
 	}
-	fclose(fpr);
 
 	// TODO: Read startTime from file and use that as a starting point.
 	startTime = clock();
@@ -180,7 +223,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, diameter, circles, circlesPlaced);
+				placeCircle(arr1, arr2, &open, w, h, d, diameter, circles, circlesPlaced);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 			} else { // This will probably never happen.
@@ -191,6 +234,7 @@ int main(void) {
 		score = getScore(desiredCircleCount, circles);
 
 		if (score > highScore) {
+			printf("highscore!");
 			endTime = clock();
 			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
 			
@@ -218,6 +262,9 @@ int main(void) {
 			fclose(fpw);
 		}
 	}
-	
+
+	free(arr1);
+	free(arr2);
+
 	return 0;
 }
