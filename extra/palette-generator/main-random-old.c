@@ -24,6 +24,8 @@ void	generate_colors(int color_count)
 	double	smallest_diff;
 	double	largest_diff;
 
+	double	radius;
+
 	double	r1, g1, b1, r2, g2, b2;
 	
 	double	r_diff, g_diff, b_diff;
@@ -126,6 +128,7 @@ void	generate_colors(int color_count)
 
 				if (diff < smallest_diff) {
 					smallest_diff = diff;
+					radius = sqrt(r_diff_sq + g_diff_sq + b_diff_sq);
 				}
 			}
 		}
@@ -145,7 +148,7 @@ void	generate_colors(int color_count)
 			fprintf(fp_w, "%f\n", smallest_diff);
 			fprintf(fp_w, "%f\n", total_t);
 
-			printf("%f score with a diameter of %d after %d circles were placed in total, found after %f seconds from the start\n", smallest_diff, (int)sqrt(smallest_diff), gens * color_count, total_t);
+			printf("%f score with a radius of %f after %d circles were placed in total, found after %f seconds since the start\n", smallest_diff, radius, gens * color_count, total_t);
 
 			for (int j = 0; j < color_count * 3; j++) {
 				fprintf(fp_w, "%d", colors[j]);

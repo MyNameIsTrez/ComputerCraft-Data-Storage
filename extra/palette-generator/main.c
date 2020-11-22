@@ -4,16 +4,16 @@
 #include <time.h>
 #include <math.h>
 
-double getScore(const int desiredCircleCount, int circles[]) {
+void getScore(const int desiredCircleCount, int circles[], double *score, double *radiusScore) {
 	double smallestDiff = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
-	
+
 	double rDiff, gDiff, bDiff;
 	double rDiffSq, gDiffSq, bDiffSq;
-	
+
 	double rAvg;
-	
+
 	double rWeight, gWeight, bWeight;
 	double diff;
 
@@ -53,11 +53,11 @@ double getScore(const int desiredCircleCount, int circles[]) {
 
 			if (diff < smallestDiff) {
 				smallestDiff = diff;
+				*score = diff;
+				*radiusScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
 			}
 		}	
 	}
-
-	return smallestDiff;
 }
 
 void close(const int x, const int y, const int z, const int w, const int h, const int d, int *open, int arr1[], int arr2[]) {
@@ -105,7 +105,7 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in a cube.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int diameter, int circles[], int circlesPlaced) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, int circles[], int circlesPlaced) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
@@ -117,8 +117,6 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 	circles[circlesPlaced * 3 + 2] = mz;
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
-
-	const int radius = diameter;
 
 	for(int z=-radius; z<=radius; z++)
 		for(int y=-radius; y<=radius; y++)
@@ -197,11 +195,13 @@ int main(void) {
 
 	int open;
 	int circles[desiredCircleCount * 3];
-	int diameter = 0;
-
-	double score;
 
 	double highScore = 0;
+	double score;
+
+	int radius = 0;
+	double radiusScore;
+
 	FILE *fpw;
 	FILE *fpr;
 
@@ -228,7 +228,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, diameter, circles, circlesPlaced);
+				placeCircle(arr1, arr2, &open, w, h, d, radius, circles, circlesPlaced);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 			} else { // This will probably never happen.
@@ -236,14 +236,16 @@ int main(void) {
 			}
 		}
 
-		score = getScore(desiredCircleCount, circles);
+		getScore(desiredCircleCount, circles, &score, &radiusScore);
 
 		if (score > highScore) {
 			endTime = clock();
 			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
 			
-			diameter = sqrt(score);
 			highScore = score;
+
+			radius = (int)radiusScore;
+			// radius++; // TODO: Why doesn't the score shoot up in the beginning with this to increase the radius?
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
@@ -254,7 +256,7 @@ int main(void) {
 			fprintf(fpw, "%f\n", score);
 			fprintf(fpw, "%f\n", totalTime);
 
-			printf("%f score with a diameter of %d after %d circles were placed in total, found after %f seconds from the start\n", score, diameter, circlesPlacedTotal, totalTime);
+			printf("%f score with a radius of %f after %d circles were placed in total, found after %f seconds since the start\n", score, radiusScore, circlesPlacedTotal, totalTime);
 
 			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);
