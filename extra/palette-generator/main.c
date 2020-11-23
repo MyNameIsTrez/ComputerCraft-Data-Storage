@@ -104,7 +104,7 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, int circles[], int circlesPlaced) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, const int radiusSq3, int circles[], int circlesPlaced) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
@@ -120,7 +120,7 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 	for(int z=-radius; z<=radius; z++)
 		for(int y=-radius; y<=radius; y++)
 			for(int x=-radius; x<=radius; x++)
-				if(x*x+y*y+z*z <= radius*radius*radius)
+				if(x*x+y*y+z*z <= radiusSq3)
 					close(mx+x, my+y, mz+z, w, h, d, open, arr1, arr2);
 }
 
@@ -153,6 +153,7 @@ int main(void) {
 
 	int radius = 0;
 	int radiusScore;
+	int radiusSq3 = 0;
 
 	FILE *fpw;
 	FILE *fpr;
@@ -178,7 +179,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, radius, circles, circlesPlaced);
+				placeCircle(arr1, arr2, &open, w, h, d, radius, radiusSq3, circles, circlesPlaced);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 			} else { // This will probably never happen.
@@ -195,6 +196,7 @@ int main(void) {
 			highScore = score;
 
 			radius = radiusScore; // TODO: Use better heuristic.
+			radiusSq3 = radius * radius * radius;
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
