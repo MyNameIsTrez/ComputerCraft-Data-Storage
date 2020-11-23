@@ -63,26 +63,24 @@ void close(const int x, const int y, const int z, const int w, const int h, cons
 	if (x >= 0 && x < w && y >= 0 && y < h && z >= 0 && z < d) {
 		const int n1 = x + y * w + z * (w * h);
 
-		if (n1 >= 0) { // TODO: If-statement is probably redundant.
-			const int arr1i1 = arr2[n1];
-			
-			if (arr1i1 < *open - 1) {
-				const int arr1i2 = *open - 1;
-				const int n2 = arr1[arr1i2];
+		const int arr1i1 = arr2[n1];
 
-				// arr1 editing
-				arr1[arr1i1] = n2;
-				arr1[arr1i2] = n1;
+		if (arr1i1 < *open - 1) {
+			const int arr1i2 = *open - 1;
+			const int n2 = arr1[arr1i2];
 
-				// arr2 editing
-				arr2[n1] = arr1i2;
-				arr2[n2] = arr1i1;
+			// arr1 editing
+			arr1[arr1i1] = n2;
+			arr1[arr1i2] = n1;
 
-				(*open)--;
-			} else if (arr1i1 == *open - 1) {
-				(*open)--;
-			} else {} // When it's already been removed.
-		}
+			// arr2 editing
+			arr2[n1] = arr1i2;
+			arr2[n2] = arr1i1;
+
+			(*open)--;
+		} else if (arr1i1 == *open - 1) {
+			(*open)--;
+		} else {} // When it's already been removed.
 	}
 }
 
@@ -96,7 +94,7 @@ void reset(const int cellCount, int arr1[], int arr2[], int *circlesPlaced, int 
 }
 
 double rand01(void) {
-	return rand() / ((double) RAND_MAX);
+	return rand() / (double)RAND_MAX;
 }
 
 int getRandomOpen(int arr1[], const int *open) {
@@ -104,16 +102,16 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, const int radiusSq3, int circles[], int circlesPlaced) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, const int radiusSq3, int circles[], const int circlesPlacedIdx) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
 	const int my = (i / w) % h;
 	const int mz = i / (w * h);
 
-	circles[circlesPlaced * 3 + 0] = mx;
-	circles[circlesPlaced * 3 + 1] = my;
-	circles[circlesPlaced * 3 + 2] = mz;
+	circles[circlesPlacedIdx + 0] = mx;
+	circles[circlesPlacedIdx + 1] = my;
+	circles[circlesPlacedIdx + 2] = mz;
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
@@ -179,7 +177,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, radius, radiusSq3, circles, circlesPlaced);
+				placeCircle(arr1, arr2, &open, w, h, d, radius, radiusSq3, circles, circlesPlaced * 3);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 			} else { // This will probably never happen.
