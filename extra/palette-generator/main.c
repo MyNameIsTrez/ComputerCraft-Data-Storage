@@ -4,8 +4,8 @@
 #include <time.h>
 #include <math.h>
 
-void getScore(const int desiredCircleCount, int circles[], double *score, double *radiusScore) {
-	double smallestDiff = INT_MAX;
+void getScore(const int desiredCircleCount, int circles[], double *score) {
+	*score = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
 
@@ -38,9 +38,9 @@ void getScore(const int desiredCircleCount, int circles[], double *score, double
 
 			rAvg = (r1 + r2) / 2;
 			
-			rWeight = (2 + rAvg / 256) * rDiffSq;
-			gWeight = 4 * gDiffSq;
-			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq;
+			rWeight = (2 + rAvg / 256) * rDiffSq;         // min: 2 * rDiffSq, max: (2 + 255/256) * rDiffSq
+			gWeight = 4 * gDiffSq;                        // min & max: 4 * gDiffSq
+			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq; // min: (2 + 255/256) * bDiffSq, max: 2 * bDiffSq
 			
 			/*
 			// Simple euclidean distance. Doesn't reflect how eyes work.
@@ -51,10 +51,8 @@ void getScore(const int desiredCircleCount, int circles[], double *score, double
 
 			diff = rWeight + gWeight + bWeight;
 
-			if (diff < smallestDiff) {
-				smallestDiff = diff;
+			if (diff < *score) {
 				*score = diff;
-				*radiusScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
 			}
 		}	
 	}
@@ -104,7 +102,7 @@ int getRandomOpen(int arr1[], const int *open) {
 	return arr1[(int)(rand01() * (*open))];
 }
 
-// Find faster algorithm, because this checks every cell in a cube.
+// Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
 void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, int circles[], int circlesPlaced) {
 	const int i = getRandomOpen(arr1, open);
 
@@ -124,53 +122,6 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 				if(x*x+y*y+z*z <= radius*radius*radius)
 					close(mx+x, my+y, mz+z, w, h, d, open, arr1, arr2);
 }
-
-// TODO: Check Wikipedia page to see if this implementation is correct.
-// https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-// https://stackoverflow.com/a/14976268/13279557
-/*
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int diameter, int circles[], int circlesPlaced) {
-	const int i = getRandomOpen(arr1, open);
-
-	const int x0 = i % w;
-	const int y0 = i / w;
-	const int z0 = i / (w * h);
-
-	circles[circlesPlaced * 3 + 0] = x0;
-	circles[circlesPlaced * 3 + 1] = y0;
-	circles[circlesPlaced * 3 + 2] = z0;
-
-	const int radius = diameter;
-
-	int x = radius;
-	int y = 0;
-	int xChange = 1 - (radius << 1); // TODO: Is the automatic cast to int unwanted?
-	int yChange = 0;
-	int radiusError = 0;
-
-	while (x >= y) {
-		for (int i = x0 - x; i <= x0 + x; i++) {
-			// TODO: REWRITE THIS WHOLE FUNCTION SO IT'S FOR 3D
-			close(i, y0 + y, z, w, h, d, open, arr1, arr2);
-			close(i, y0 - y, z, w, h, d, open, arr1, arr2);
-		}
-		for (int i = x0 - y; i <= x0 + y; i++) {
-			close(i, y0 + x, z, w, h, d, open, arr1, arr2);
-			close(i, y0 - x, z, w, h, d, open, arr1, arr2);
-		}
-
-		y++;
-		radiusError += yChange;
-		yChange += 2;
-		
-		if (((radiusError << 1) + xChange) > 0) {
-			x--;
-			radiusError += xChange;
-			xChange += 2;
-		}
-	}
-}
-*/
 
 int main(void) {
 	// CONFIGURABLE
@@ -200,7 +151,6 @@ int main(void) {
 	double score;
 
 	int radius = 0;
-	double radiusScore;
 
 	FILE *fpw;
 	FILE *fpr;
@@ -236,7 +186,7 @@ int main(void) {
 			}
 		}
 
-		getScore(desiredCircleCount, circles, &score, &radiusScore);
+		getScore(desiredCircleCount, circles, &score);
 
 		if (score > highScore) {
 			endTime = clock();
@@ -244,8 +194,7 @@ int main(void) {
 			
 			highScore = score;
 
-			radius = (int)radiusScore;
-			// radius++; // TODO: Why doesn't the score shoot up in the beginning with this to increase the radius?
+			radius++; // TODO: Find better minimum increment.
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
@@ -256,7 +205,7 @@ int main(void) {
 			fprintf(fpw, "%f\n", score);
 			fprintf(fpw, "%f\n", totalTime);
 
-			printf("%f score with a radius of %f after %d circles were placed in total, found after %f seconds since the start\n", score, radiusScore, circlesPlacedTotal, totalTime);
+			printf("%f score with a radius of %d after %d circles were placed in total, found after %f seconds since the start\n", score, radius, circlesPlacedTotal, totalTime);
 
 			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);

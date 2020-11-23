@@ -21,10 +21,8 @@ void	generate_colors(int color_count)
 
 	int	colors[color_count * 3];
 
-	double	smallest_diff;
-	double	largest_diff;
-
-	double	radius;
+	double	score;
+	double	high_score;
 
 	double	r1, g1, b1, r2, g2, b2;
 	
@@ -75,7 +73,7 @@ void	generate_colors(int color_count)
 	colors[22] = 255;
 	colors[23] = 255;
 
-	largest_diff = 0;
+	high_score = 0;
 	
 	gens = 1;
 
@@ -98,7 +96,7 @@ void	generate_colors(int color_count)
 			colors[k] = rand() % 256;
 		}
 
-		smallest_diff = INT_MAX;
+		score = INT_MAX;
 
 		for (int i = 0; i < color_count - 1; i++) {
 			for (int j = i + 1; j < color_count; j++) {
@@ -126,29 +124,28 @@ void	generate_colors(int color_count)
 				
 				diff = r_weight + g_weight + b_weight;
 
-				if (diff < smallest_diff) {
-					smallest_diff = diff;
-					radius = sqrt(r_diff_sq + g_diff_sq + b_diff_sq);
+				if (diff < score) {
+					score = diff;
 				}
 			}
 		}
 	
-		if (smallest_diff > largest_diff)
+		if (score > high_score)
 		{
 			end_t = clock();
 			total_t = (float)(end_t - start_t) / CLOCKS_PER_SEC;
 			
-			largest_diff = smallest_diff;
+			high_score = score;
 
 			if ((fp_w = fopen(file_name, "w")) == NULL) {
 				printf("Error getting write handle.");
 			}
 
 			fprintf(fp_w, "%d\n", gens);
-			fprintf(fp_w, "%f\n", smallest_diff);
+			fprintf(fp_w, "%f\n", score);
 			fprintf(fp_w, "%f\n", total_t);
 
-			printf("%f score with a radius of %f after %d circles were placed in total, found after %f seconds since the start\n", smallest_diff, radius, gens * color_count, total_t);
+			printf("%f score after %d circles were placed in total, found after %f seconds since the start\n", score, gens * color_count, total_t);
 
 			for (int j = 0; j < color_count * 3; j++) {
 				fprintf(fp_w, "%d", colors[j]);
