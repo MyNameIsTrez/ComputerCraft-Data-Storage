@@ -4,7 +4,7 @@
 #include <time.h>
 #include <math.h>
 
-void getScore(const int desiredCircleCount, int circles[], double *score) {
+void getScore(const int desiredCircleCount, int circles[], double *score, int *radiusScore) {
 	*score = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
@@ -53,6 +53,7 @@ void getScore(const int desiredCircleCount, int circles[], double *score) {
 
 			if (diff < *score) {
 				*score = diff;
+				*radiusScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
 			}
 		}	
 	}
@@ -151,26 +152,25 @@ int main(void) {
 	double score;
 
 	int radius = 0;
+	int radiusScore;
 
 	FILE *fpw;
 	FILE *fpr;
 
-	clock_t startTime, endTime;
-	float totalTime;
+	clock_t startTime, endTime, offsetTime = 0;
+	double totalTime;
 
-
-	// TODO: Read highScore from file and use that as a starting point.
-	highScore = 0;
-	
 	fpr = fopen(fileName, "r");
 	if (fpr != NULL) {
-		fscanf(fpr, "%d", &circlesPlacedTotal);
+		fscanf(fpr, "%lf %d %d %ld", &highScore, &radius, &circlesPlacedTotal, &offsetTime);
 		fclose(fpr);
+		printf("LOADED: ");
+		printf("%lf high score with a radius of %d after %d circles were placed in total, found after %lf seconds since the start\n", highScore, radius, circlesPlacedTotal, (double)offsetTime / CLOCKS_PER_SEC);
 	} else {
 		circlesPlacedTotal = 0;
+		highScore = 0;
 	}
 
-	// TODO: Read startTime from file and use that as a starting point.
 	startTime = clock();
 
 	while (1) {
@@ -186,26 +186,24 @@ int main(void) {
 			}
 		}
 
-		getScore(desiredCircleCount, circles, &score);
+		getScore(desiredCircleCount, circles, &score, &radiusScore);
 
 		if (score > highScore) {
 			endTime = clock();
-			totalTime = (float)(endTime - startTime) / CLOCKS_PER_SEC;
-			
+			totalTime = (double)(endTime + offsetTime - startTime) / CLOCKS_PER_SEC;
+
 			highScore = score;
 
-			radius++; // TODO: Find better minimum increment.
+			radius = radiusScore; // TODO: Use better heuristic.
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
 				printf("Error getting write handle.");
 			}
 
-			fprintf(fpw, "%d\n", circlesPlacedTotal);
-			fprintf(fpw, "%f\n", score);
-			fprintf(fpw, "%f\n", totalTime);
+			fprintf(fpw, "%lf\n%d\n%d\n%ld\n", highScore, radius, circlesPlacedTotal, endTime + offsetTime - startTime);
 
-			printf("%f score with a radius of %d after %d circles were placed in total, found after %f seconds since the start\n", score, radius, circlesPlacedTotal, totalTime);
+			printf("%lf high score with a radius of %d after %d circles were placed in total, found after %lf seconds since the start\n", highScore, radius, circlesPlacedTotal, totalTime);
 
 			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);
