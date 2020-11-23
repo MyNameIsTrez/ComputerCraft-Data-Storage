@@ -59,10 +59,9 @@ void getScore(const int desiredCircleCount, int circles[], double *score, int *r
 	}
 }
 
-void close(const int x, const int y, const int z, const int w, const int h, const int d, int *open, int arr1[], int arr2[]) {
+void close(const int x, const int y, const int z, const int w, const int h, const int d, const int wh, int *open, int arr1[], int arr2[]) {
 	if (x >= 0 && x < w && y >= 0 && y < h && z >= 0 && z < d) {
-		const int n1 = x + y * w + z * (w * h);
-
+		const int n1 = x + y * w + z * wh;
 		const int arr1i1 = arr2[n1];
 
 		if (arr1i1 < *open - 1) {
@@ -102,7 +101,7 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int radius, const int radiusSq3, int circles[], const int circlesPlacedIdx) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int radius, const int radiusSq3, int circles[], const int circlesPlacedIdx) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
@@ -115,11 +114,20 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
+	/*
+	const int zMin = -radius < 0 ? 0 : -radius;
+	const int zMax = radius > d ? d : radius;
+	const int yMin = -radius < 0 ? 0 : -radius;
+	const int yMax = radius > h ? h : radius;
+	const int xMin = -radius < 0 ? 0 : -radius;
+	const int xMax = radius > w ? w : radius;
+	*/
+
 	for(int z=-radius; z<=radius; z++)
 		for(int y=-radius; y<=radius; y++)
 			for(int x=-radius; x<=radius; x++)
 				if(x*x+y*y+z*z <= radiusSq3)
-					close(mx+x, my+y, mz+z, w, h, d, open, arr1, arr2);
+					close(mx+x, my+y, mz+z, w, h, d, wh, open, arr1, arr2);
 }
 
 int main(void) {
@@ -129,10 +137,11 @@ int main(void) {
 	const int w = 256;
 	const int h = 256;
 	const int d = 256;
+
 	const char fileName[] = "palette.txt";
 
-
 	// NOT CONFIGURABLE
+	const int wh = w * h;
 	const int cellCount = w * h * d;
 	
 	int *arr1;
@@ -177,7 +186,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, radius, radiusSq3, circles, circlesPlaced * 3);
+				placeCircle(arr1, arr2, &open, w, h, d, wh, radius, radiusSq3, circles, circlesPlaced * 3);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 			} else { // This will probably never happen.
