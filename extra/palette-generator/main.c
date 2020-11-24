@@ -79,7 +79,7 @@ void close(const int x, const int y, const int z, const int w, const int h, cons
 			(*open)--;
 		} else if (arr1i1 == *open - 1) {
 			(*open)--;
-		} else {} // When it's already been removed.
+		} // else {} // When it has already been removed.
 	}
 }
 
@@ -114,18 +114,16 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
-	/*
-	const int zMin = -radius < 0 ? 0 : -radius;
-	const int zMax = radius > d ? d : radius;
-	const int yMin = -radius < 0 ? 0 : -radius;
-	const int yMax = radius > h ? h : radius;
-	const int xMin = -radius < 0 ? 0 : -radius;
-	const int xMax = radius > w ? w : radius;
-	*/
+	const int zMin = mz - radius < 0 ?   - mz : -radius;
+	const int zMax = mz + radius > d ? d - mz :  radius;
+	const int yMin = my - radius < 0 ?   - my : -radius;
+	const int yMax = my + radius > h ? h - my :  radius;
+	const int xMin = mx - radius < 0 ?   - mx : -radius;
+	const int xMax = mx + radius > w ? w - mx :  radius;
 
-	for(int z=-radius; z<=radius; z++)
-		for(int y=-radius; y<=radius; y++)
-			for(int x=-radius; x<=radius; x++)
+	for(int z = zMin; z <= zMax; z++)
+		for(int y = yMin; y <= yMax; y++)
+			for(int x = xMin; x <= xMax; x++)
 				if(x*x+y*y+z*z <= radiusSq3)
 					close(mx+x, my+y, mz+z, w, h, d, wh, open, arr1, arr2);
 }
