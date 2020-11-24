@@ -4,7 +4,7 @@
 #include <time.h>
 #include <math.h>
 
-void getScore(const int desiredCircleCount, int circles[], double *score, int *radiusScore) {
+void getScore(const int desiredCircleCount, int circles[], double *score, int *distScore) {
 	*score = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
@@ -53,7 +53,7 @@ void getScore(const int desiredCircleCount, int circles[], double *score, int *r
 
 			if (diff < *score) {
 				*score = diff;
-				*radiusScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
+				*distScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
 			}
 		}	
 	}
@@ -99,7 +99,7 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int radius, const int radiusSq, int circles[], const int circlesPlacedIdx) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int dist, const int distSq, int circles[], const int circlesPlacedIdx) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
@@ -112,17 +112,17 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
-	const int zMin = mz - radius < 0     ?   - mz     : -radius;
-	const int zMax = mz + radius > d - 1 ? d - mz - 1 :  radius;
-	const int yMin = my - radius < 0     ?   - my     : -radius;
-	const int yMax = my + radius > h - 1 ? h - my - 1 :  radius;
-	const int xMin = mx - radius < 0     ?   - mx     : -radius;
-	const int xMax = mx + radius > w - 1 ? w - mx - 1 :  radius;
+	const int zMin = mz - dist < 0     ?   - mz     : -dist;
+	const int zMax = mz + dist > d - 1 ? d - mz - 1 :  dist;
+	const int yMin = my - dist < 0     ?   - my     : -dist;
+	const int yMax = my + dist > h - 1 ? h - my - 1 :  dist;
+	const int xMin = mx - dist < 0     ?   - mx     : -dist;
+	const int xMax = mx + dist > w - 1 ? w - mx - 1 :  dist;
 
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
-				if(x*x+y*y+z*z <= radiusSq)
+				if(x*x+y*y+z*z <= distSq)
 					close(mx+x, my+y, mz+z, w, wh, open, arr1, arr2);
 }
 
@@ -154,22 +154,22 @@ int main(void) {
 	double highScore = 0;
 	double score;
 
-	int radius = 0;
-	int radiusScore;
-	int radiusSq = 0;
+	int dist = 0;
+	int distScore;
+	int distSq = 0;
 
 	FILE *fpw;
 	FILE *fpr;
 
 	clock_t startTime, endTime, offsetTime = 0;
-	double totalTime;
+	int flooredTime;
 
 	fpr = fopen(fileName, "r");
 	if (fpr != NULL) {
-		fscanf(fpr, "%lf %d %d %ld", &highScore, &radius, &circlesPlacedTotal, &offsetTime);
+		fscanf(fpr, "%lf %d %d %ld", &highScore, &dist, &circlesPlacedTotal, &offsetTime);
 		fclose(fpr);
 		printf("LOADED: ");
-		printf("%lf high score with a radius of %d after %d circles were placed in total, found after %lf seconds since the start\n", highScore, radius, circlesPlacedTotal, (double)offsetTime / CLOCKS_PER_SEC);
+		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, (int)(offsetTime / (double)CLOCKS_PER_SEC));
 	} else {
 		circlesPlacedTotal = 0;
 		highScore = 0;
@@ -184,7 +184,7 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, wh, radius, radiusSq, circles, circlesPlaced * 3);
+				placeCircle(arr1, arr2, &open, w, h, d, wh, dist, distSq, circles, circlesPlaced * 3);
 				circlesPlaced++;
 				circlesPlacedTotal++;
 //				if (circlesPlaced % 2 == 0) {
@@ -198,26 +198,26 @@ int main(void) {
 			}
 		}
 
-		getScore(desiredCircleCount, circles, &score, &radiusScore);
+		getScore(desiredCircleCount, circles, &score, &distScore);
 
 //		printf("score: %lf, highScore: %lf\n", score, highScore);
 		if (score > highScore) {
-			endTime = clock();
-			totalTime = (double)(endTime + offsetTime - startTime) / CLOCKS_PER_SEC;
-
 			highScore = score;
 
-			radius = radiusScore; // TODO: Use better heuristic.
-			radiusSq = radius * radius;
+			dist = distScore; // TODO: Use better heuristic.
+			distSq = dist * dist;
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
 				printf("Error getting write handle.");
 			}
 
-			fprintf(fpw, "%lf\n%d\n%d\n%ld\n", highScore, radius, circlesPlacedTotal, endTime + offsetTime - startTime);
+			fprintf(fpw, "%lf\n%d\n%d\n%ld\n", highScore, dist, circlesPlacedTotal, endTime + offsetTime - startTime);
 
-			printf("%lf high score with a radius of %d after %d circles were placed in total, found after %lf seconds since the start\n", highScore, radius, circlesPlacedTotal, totalTime);
+			endTime = clock();
+			flooredTime = (endTime + offsetTime - startTime) / CLOCKS_PER_SEC;
+
+			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, flooredTime);
 
 			for (int j = 0; j < desiredCircleCount * 3; j++) {
 				fprintf(fpw, "%d", circles[j]);
