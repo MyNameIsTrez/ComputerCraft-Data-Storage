@@ -59,28 +59,26 @@ void getScore(const int desiredCircleCount, int circles[], double *score, int *r
 	}
 }
 
-void close(const int x, const int y, const int z, const int w, const int h, const int d, const int wh, int *open, int arr1[], int arr2[]) {
-	if (x >= 0 && x < w && y >= 0 && y < h && z >= 0 && z < d) {
-		const int n1 = x + y * w + z * wh;
-		const int arr1i1 = arr2[n1];
+void close(const int x, const int y, const int z, const int w, const int wh, int *open, int arr1[], int arr2[]) {
+	const int n1 = x + y * w + z * wh;
+	const int arr1i1 = arr2[n1];
 
-		if (arr1i1 < *open - 1) {
-			const int arr1i2 = *open - 1;
-			const int n2 = arr1[arr1i2];
+	if (arr1i1 < *open - 1) {
+		const int arr1i2 = *open - 1;
+		const int n2 = arr1[arr1i2];
 
-			// arr1 editing
-			arr1[arr1i1] = n2;
-			arr1[arr1i2] = n1;
+		// arr1 editing
+		arr1[arr1i1] = n2;
+		arr1[arr1i2] = n1;
 
-			// arr2 editing
-			arr2[n1] = arr1i2;
-			arr2[n2] = arr1i1;
+		// arr2 editing
+		arr2[n1] = arr1i2;
+		arr2[n2] = arr1i1;
 
-			(*open)--;
-		} else if (arr1i1 == *open - 1) {
-			(*open)--;
-		} // else {} // When it has already been removed.
-	}
+		(*open)--;
+	} else if (arr1i1 == *open - 1) {
+		(*open)--;
+	} // else {} // When it has already been removed.
 }
 
 void reset(const int cellCount, int arr1[], int arr2[], int *circlesPlaced, int *open) {
@@ -114,18 +112,18 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 
 	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
 
-	const int zMin = mz - radius < 0 ?   - mz : -radius;
-	const int zMax = mz + radius > d ? d - mz :  radius;
-	const int yMin = my - radius < 0 ?   - my : -radius;
-	const int yMax = my + radius > h ? h - my :  radius;
-	const int xMin = mx - radius < 0 ?   - mx : -radius;
-	const int xMax = mx + radius > w ? w - mx :  radius;
+	const int zMin = mz - radius < 0     ?   - mz     : -radius;
+	const int zMax = mz + radius > d - 1 ? d - mz - 1 :  radius;
+	const int yMin = my - radius < 0     ?   - my     : -radius;
+	const int yMax = my + radius > h - 1 ? h - my - 1 :  radius;
+	const int xMin = mx - radius < 0     ?   - mx     : -radius;
+	const int xMax = mx + radius > w - 1 ? w - mx - 1 :  radius;
 
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
 				if(x*x+y*y+z*z <= radiusSq3)
-					close(mx+x, my+y, mz+z, w, h, d, wh, open, arr1, arr2);
+					close(mx+x, my+y, mz+z, w, wh, open, arr1, arr2);
 }
 
 int main(void) {
