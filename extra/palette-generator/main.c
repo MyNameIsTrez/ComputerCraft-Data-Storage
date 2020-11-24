@@ -99,7 +99,7 @@ int getRandomOpen(int arr1[], const int *open) {
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int radius, const int radiusSq3, int circles[], const int circlesPlacedIdx) {
+void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int radius, const int radiusSq, int circles[], const int circlesPlacedIdx) {
 	const int i = getRandomOpen(arr1, open);
 
 	const int mx = i % w;
@@ -122,7 +122,7 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
-				if(x*x+y*y+z*z <= radiusSq3)
+				if(x*x+y*y+z*z <= radiusSq)
 					close(mx+x, my+y, mz+z, w, wh, open, arr1, arr2);
 }
 
@@ -156,7 +156,7 @@ int main(void) {
 
 	int radius = 0;
 	int radiusScore;
-	int radiusSq3 = 0;
+	int radiusSq = 0;
 
 	FILE *fpw;
 	FILE *fpr;
@@ -175,6 +175,8 @@ int main(void) {
 		highScore = 0;
 	}
 
+	//highScore = 0;
+
 	startTime = clock();
 
 	while (1) {
@@ -182,16 +184,23 @@ int main(void) {
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, wh, radius, radiusSq3, circles, circlesPlaced * 3);
+				placeCircle(arr1, arr2, &open, w, h, d, wh, radius, radiusSq, circles, circlesPlaced * 3);
 				circlesPlaced++;
 				circlesPlacedTotal++;
-			} else { // This will probably never happen.
+//				if (circlesPlaced % 2 == 0) {
+//					printf("circlesPlaced++\n");
+//				} else {
+//					printf("circlesPlaced++!\n");
+//				}
+			} else {
+//				printf("EARLY RESET!!!\n");
 				reset(cellCount, arr1, arr2, &circlesPlaced, &open);
 			}
 		}
 
 		getScore(desiredCircleCount, circles, &score, &radiusScore);
 
+//		printf("score: %lf, highScore: %lf\n", score, highScore);
 		if (score > highScore) {
 			endTime = clock();
 			totalTime = (double)(endTime + offsetTime - startTime) / CLOCKS_PER_SEC;
@@ -199,7 +208,7 @@ int main(void) {
 			highScore = score;
 
 			radius = radiusScore; // TODO: Use better heuristic.
-			radiusSq3 = radius * radius * radius;
+			radiusSq = radius * radius;
 
 			fpw = fopen(fileName, "w");
 			if (fpw == NULL) {
