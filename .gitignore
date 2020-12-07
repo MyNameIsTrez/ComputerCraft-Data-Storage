@@ -10,4 +10,5 @@ extra/temp
 extra/websockets/node_modules
 extra/websockets/package-lock.json
 extra/websockets/package.json
+pictures
 # asciify/python/utils/__pychache__
