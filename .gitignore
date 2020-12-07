@@ -1,8 +1,13 @@
 .vscode
+package-lock.json
 asciify/node_modules
 asciify/metadata.db
 asciify/python/temp-downloads
 asciify/ascii-content
 asciify/conversion-progress.txt
+asciify/package-lock.json
 extra/temp
+extra/websockets/node_modules
+extra/websockets/package-lock.json
+extra/websockets/package.json
 # asciify/python/utils/__pychache__
