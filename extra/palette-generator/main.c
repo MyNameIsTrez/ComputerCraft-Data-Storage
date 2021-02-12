@@ -4,8 +4,8 @@
 #include <time.h>
 #include <math.h>
 
-void getScore(const int desiredCircleCount, int circles[], double *score, int *distScore) {
-	*score = INT_MAX;
+double getScore(const int desiredCircleCount, int circles[], double *distScoreSq) {
+	double score = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
 
@@ -51,40 +51,53 @@ void getScore(const int desiredCircleCount, int circles[], double *score, int *d
 
 			diff = rWeight + gWeight + bWeight;
 
-			if (diff < *score) {
-				*score = diff;
-				*distScore = sqrt(rDiffSq + gDiffSq + bDiffSq);
+			if (diff < score) {
+				score = diff;
+				*distScoreSq = rDiffSq + gDiffSq + bDiffSq;
 			}
 		}	
 	}
+
+	return score;
 }
 
-void close(const int x, const int y, const int z, const int w, const int wh, int *open, int arr1[], int arr2[]) {
-	const int n1 = x + y * w + z * wh;
-	const int arr1i1 = arr2[n1];
+/*
+** Values in flat are (X,Y,Z) coordinates mapped to 1D.
+** flatIndexes[n] returns the index of value n in flat.
+**
+** closeCoord is the value in flat that is to be closed.
+** closeCoordIndex is the index of closeCoord in flat.
+**
+** lastOpenCoord is the value of the last open cell in flat.
+** lastOpenCoordIndex is the index of the last open cell in flat.
+**
+** The algorithm is similar to this one, except that "Scratch" and "Result" are combined into a single array:
+** https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#Modern_method
+*/
+void close(const int x, const int y, const int z, const int w, const int wh, int *open, int flat[], int flatIndexes[]) {
+	const int closeCoord = x + y * w + z * wh;
+	const int closeCoordIndex = flatIndexes[closeCoord];
 
-	if (arr1i1 < *open - 1) {
-		const int arr1i2 = *open - 1;
-		const int n2 = arr1[arr1i2];
+	if (closeCoordIndex < *open - 1) {
+		const int lastOpenCoordIndex = *open - 1;
+		const int lastOpenCoord = flat[lastOpenCoordIndex];
 
-		// arr1 editing
-		arr1[arr1i1] = n2;
-		arr1[arr1i2] = n1;
+		flat[closeCoordIndex] = lastOpenCoord;
+		// flat[lastOpenCoordIndex] = closeCoord; // An unnecessary step, as this coord is being closed.
 
-		// arr2 editing
-		arr2[n1] = arr1i2;
-		arr2[n2] = arr1i1;
+		flatIndexes[closeCoord] = lastOpenCoordIndex;
+		flatIndexes[lastOpenCoord] = closeCoordIndex;
 
 		(*open)--;
-	} else if (arr1i1 == *open - 1) {
+	} else if (closeCoordIndex == *open - 1) {
 		(*open)--;
 	} // else {} // When it has already been removed.
 }
 
-void reset(const int cellCount, int arr1[], int arr2[], int *circlesPlaced, int *open) {
+void reset(const int cellCount, int flat[], int flatIndexes[], int *circlesPlaced, int *open) {
 	for (int i = 0; i < cellCount; i++) {
-		arr1[i] = i;
-		arr2[i] = i;
+		flat[i] = i;
+		flatIndexes[i] = i;
 	}
 	*circlesPlaced = 0;
 	*open = cellCount;
@@ -94,13 +107,13 @@ double rand01(void) {
 	return rand() / (double)RAND_MAX;
 }
 
-int getRandomOpen(int arr1[], const int *open) {
-	return arr1[(int)(rand01() * (*open))];
+int getRandomOpen(int flat[], const int *open) {
+	return flat[(int)(rand01() * (*open))];
 }
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
-void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, const int d, const int wh, const int dist, const int distSq, int circles[], const int circlesPlacedIdx) {
-	const int i = getRandomOpen(arr1, open);
+void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const int h, const int d, const int wh, const int dist, const int distSq, int circles[], const int circlesPlacedIdx) {
+	const int i = getRandomOpen(flat, open);
 
 	const int mx = i % w;
 	const int my = (i / w) % h;
@@ -119,31 +132,72 @@ void placeCircle(int arr1[], int arr2[], int *open, const int w, const int h, co
 	const int xMin = mx - dist < 0     ?   - mx     : -dist;
 	const int xMax = mx + dist > w - 1 ? w - mx - 1 :  dist;
 
+	// TODO: Try to replace "filled cube" loop with a more efficient "filled circle" loop.
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
-				if(x*x+y*y+z*z <= distSq)
-					close(mx+x, my+y, mz+z, w, wh, open, arr1, arr2);
+				if(x*x + y*y + z*z <= distSq)
+					close(mx+x, my+y, mz+z, w, wh, open, flat, flatIndexes);
+}
+
+void readRecord(const char fileName[], double *highScore, int *dist, int *circlesPlacedTotal, double *secondsOffset) {
+	FILE *fpr;
+
+	fpr = fopen(fileName, "r");
+
+	if (fpr != NULL) {
+		fscanf(fpr, "%lf %d %d %lf", highScore, dist, circlesPlacedTotal, secondsOffset);
+		fclose(fpr);
+		printf("LOADED: ");
+		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)(*highScore), *dist, *circlesPlacedTotal, (int)(*secondsOffset));
+	} else {
+		*highScore = 0;
+		*dist = 0;
+		*circlesPlacedTotal = 0;
+		*secondsOffset = 0;
+	}
+}
+
+void writeRecord(const char fileName[], double highScore, int dist, int circlesPlacedTotal, double secondsElapsed, int desiredCircleCount, int circles[]) {
+	FILE *fpw;
+
+	fpw = fopen(fileName, "w");
+
+	if (fpw == NULL) {
+		printf("Error getting write handle.");
+	}
+
+	fprintf(fpw, "%lf\n%d\n%d\n%lf\n", highScore, dist, circlesPlacedTotal, secondsElapsed);
+
+	for (int j = 0; j < desiredCircleCount * 3; j++) {
+		fprintf(fpw, "%d", circles[j]);
+		if (j != desiredCircleCount * 3 - 1) {
+			fprintf(fpw, ", ");
+		}
+	}
+
+	fclose(fpw);
 }
 
 int main(void) {
-	// CONFIGURABLE
-	const int desiredCircleCount = 94;
+	// CONFIGURABLE //
+	const int desiredCircleCount = 94; // 94 for ComputerCraft.
 
 	const int w = 256;
 	const int h = 256;
 	const int d = 256;
 
 	const char fileName[] = "palette.txt";
+	//////////////////
 
-	// NOT CONFIGURABLE
+
 	const int wh = w * h;
 	const int cellCount = w * h * d;
 	
-	int *arr1;
-	int *arr2;
-	arr1 = malloc(cellCount * sizeof(int));
-	arr2 = malloc(cellCount * sizeof(int));
+	int *flat;
+	int *flatIndexes;
+	flat = malloc(cellCount * sizeof(int));
+	flatIndexes = malloc(cellCount * sizeof(int));
 	
 	int circlesPlaced;
 	int circlesPlacedTotal;
@@ -151,87 +205,52 @@ int main(void) {
 	int open;
 	int circles[desiredCircleCount * 3];
 
-	double highScore = 0;
+	double highScore;
 	double score;
 
-	int dist = 0;
-	int distScore;
+	int dist;
+	double distScoreSq;
 	int distSq = 0;
 
-	FILE *fpw;
-	FILE *fpr;
+	clock_t startTime;
+	double secondsOffset, secondsElapsed;
 
-	clock_t startTime, endTime, offsetTime = 0;
-	int flooredTime;
 
-	fpr = fopen(fileName, "r");
-	if (fpr != NULL) {
-		fscanf(fpr, "%lf %d %d %ld", &highScore, &dist, &circlesPlacedTotal, &offsetTime);
-		fclose(fpr);
-		printf("LOADED: ");
-		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, (int)(offsetTime / (double)CLOCKS_PER_SEC));
-	} else {
-		circlesPlacedTotal = 0;
-		highScore = 0;
-	}
-
-	//highScore = 0;
+	readRecord(fileName, &highScore, &dist, &circlesPlacedTotal, &secondsOffset);
 
 	startTime = clock();
 
 	while (1) {
-		reset(cellCount, arr1, arr2, &circlesPlaced, &open);
+		reset(cellCount, flat, flatIndexes, &circlesPlaced, &open);
 
 		while (circlesPlaced < desiredCircleCount) {
 			if (open > 0) {
-				placeCircle(arr1, arr2, &open, w, h, d, wh, dist, distSq, circles, circlesPlaced * 3);
+				placeCircle(flat, flatIndexes, &open, w, h, d, wh, dist, distSq, circles, circlesPlaced * 3);
 				circlesPlaced++;
 				circlesPlacedTotal++;
-//				if (circlesPlaced % 2 == 0) {
-//					printf("circlesPlaced++\n");
-//				} else {
-//					printf("circlesPlaced++!\n");
-//				}
-			} else {
-//				printf("EARLY RESET!!!\n");
-				reset(cellCount, arr1, arr2, &circlesPlaced, &open);
+			} else { // Probably never reached, but just in case.
+				reset(cellCount, flat, flatIndexes, &circlesPlaced, &open);
 			}
 		}
 
-		getScore(desiredCircleCount, circles, &score, &distScore);
+		score = getScore(desiredCircleCount, circles, &distScoreSq);
 
-//		printf("score: %lf, highScore: %lf\n", score, highScore);
 		if (score > highScore) {
 			highScore = score;
 
-			dist = distScore; // TODO: Use better heuristic.
-			distSq = dist * dist;
+			dist = (int)sqrt(distScoreSq); // TODO: Use better heuristic.
+			distSq = dist * dist; // TODO: Equal to "(int)distScoreSq"?
 
-			fpw = fopen(fileName, "w");
-			if (fpw == NULL) {
-				printf("Error getting write handle.");
-			}
+			secondsElapsed = (clock() - startTime) / (double)CLOCKS_PER_SEC + secondsOffset;
 
-			fprintf(fpw, "%lf\n%d\n%d\n%ld\n", highScore, dist, circlesPlacedTotal, endTime + offsetTime - startTime);
+			writeRecord(fileName, highScore, dist, circlesPlacedTotal, secondsElapsed, desiredCircleCount, circles);
 
-			endTime = clock();
-			flooredTime = (endTime + offsetTime - startTime) / CLOCKS_PER_SEC;
-
-			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, flooredTime);
-
-			for (int j = 0; j < desiredCircleCount * 3; j++) {
-				fprintf(fpw, "%d", circles[j]);
-				if (j != desiredCircleCount * 3 - 1) {
-					fprintf(fpw, ", ");
-				}
-			}
-
-			fclose(fpw);
+			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, (int)secondsElapsed);
 		}
 	}
 
-	free(arr1);
-	free(arr2);
+	free(flat);
+	free(flatIndexes);
 
 	return 0;
 }
