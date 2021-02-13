@@ -5,7 +5,7 @@
 #include <math.h>
 
 
-double getScore(const int desiredCircleCount, int circles[], double *distScoreSq) {
+double getScore(const int desiredCircleCount, int circles[]) {
 	double score = INT_MAX;
 
 	double r1, g1, b1, r2, g2, b2;
@@ -39,9 +39,9 @@ double getScore(const int desiredCircleCount, int circles[], double *distScoreSq
 
 			rAvg = (r1 + r2) / 2;
 			
-			rWeight = (2 + rAvg / 256) * rDiffSq;         // min: 2 * rDiffSq, max: (2 + 255/256) * rDiffSq
-			gWeight = 4 * gDiffSq;                        // min & max: 4 * gDiffSq
-			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq; // min: (2 + 255/256) * bDiffSq, max: 2 * bDiffSq
+			rWeight = (2 + rAvg / 256) * rDiffSq;         // min:  2 * rDiffSq           , max: (2 + 255/256) * rDiffSq
+			gWeight = 4 * gDiffSq;                        // min:  4 * gDiffSq           , max:  4 * gDiffSq
+			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq; // min: (2 + 255/256) * bDiffSq, max:  2 * bDiffSq
 			
 			/*
 			// Simple euclidean distance. Doesn't mimic how human eyes perceive color.
@@ -52,11 +52,8 @@ double getScore(const int desiredCircleCount, int circles[], double *distScoreSq
 
 			diff = rWeight + gWeight + bWeight;
 
-			if (diff < score) {
-				score = diff;
-				*distScoreSq = rDiffSq + gDiffSq + bDiffSq;
-			}
-		}	
+			score = fmin(score, diff);
+		}
 	}
 
 	return score;
@@ -85,7 +82,7 @@ void close(const int x, const int y, const int z, const int w, const int wh, int
 		const int lastOpenCoord = flat[lastOpenCoordIndex];
 
 		flat[closeCoordIndex] = lastOpenCoord;
-		// flat[lastOpenCoordIndex] = closeCoord; // An unnecessary step, as this coord is being closed.
+		// flat[lastOpenCoordIndex] = closeCoord; // An unnecessary step as this coord is being closed.
 
 		flatIndexes[closeCoord] = lastOpenCoordIndex;
 		flatIndexes[lastOpenCoord] = closeCoordIndex;
@@ -129,16 +126,16 @@ void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const in
 	circles[circlesPlacedIdx + 1] = my;
 	circles[circlesPlacedIdx + 2] = mz;
 
-	//printf("mx: %d, my: %d, mz: %d\n", mx, my, mz);
+	// Prevents trying to close out of bounds coordinates.
+	const int zMin = mz - dist < 0     ?   - mz     : - dist;
+	const int zMax = mz + dist > d - 1 ? d - mz - 1 :   dist;
+	const int yMin = my - dist < 0     ?   - my     : - dist;
+	const int yMax = my + dist > h - 1 ? h - my - 1 :   dist;
+	const int xMin = mx - dist < 0     ?   - mx     : - dist;
+	const int xMax = mx + dist > w - 1 ? w - mx - 1 :   dist;
 
-	const int zMin = mz - dist < 0     ?   - mz     : -dist;
-	const int zMax = mz + dist > d - 1 ? d - mz - 1 :  dist;
-	const int yMin = my - dist < 0     ?   - my     : -dist;
-	const int yMax = my + dist > h - 1 ? h - my - 1 :  dist;
-	const int xMin = mx - dist < 0     ?   - mx     : -dist;
-	const int xMax = mx + dist > w - 1 ? w - mx - 1 :  dist;
-
-	// TODO: Try to replace "filled cube" loop with a more efficient "filled circle" loop.
+	// TODO: Try to replace these loops which go through the points in a cube with a loop that goes through the points of a sphere.
+	//       Make sure that it's both correct and faster though!
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
@@ -147,7 +144,7 @@ void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const in
 }
 
 
-void readRecord(const char fileName[], double *highScore, int *dist, int *circlesPlacedTotal, double *secondsOffset, int *distSq) {
+void readRecord(const char fileName[], double *highScore, int startDist, int *dist, int *distSq, int *circlesPlacedTotal, double *secondsOffset) {
 	FILE *fpr;
 
 	fpr = fopen(fileName, "r");
@@ -160,7 +157,7 @@ void readRecord(const char fileName[], double *highScore, int *dist, int *circle
 
 		printf("Calling rand() %d times...\n", *circlesPlacedTotal);
 
-		// To get deterministic results even when saving and loading multiple times, it's necessary for rand() to return the same values later on.
+		// To get deterministic results even when saving and loading multiple times, it'll be necessary for rand() to return the same values.
 		// The seed for rand() is always the same, so we just need to call rand() circlesPlacedTotal times to achieve this determinism.
 		for (int i = 0; i < *circlesPlacedTotal; i++)
 			rand();
@@ -170,10 +167,10 @@ void readRecord(const char fileName[], double *highScore, int *dist, int *circle
 		*distSq = (*dist) * (*dist);
 	} else {
 		*highScore = 0;
-		*dist = 0;
+		*dist = startDist;
+		*distSq = startDist * startDist;
 		*circlesPlacedTotal = 0;
 		*secondsOffset = 0;
-		*distSq = 0;
 	}
 }
 
@@ -209,6 +206,8 @@ int main(void) {
 	const int d = 256; // Depth.
 
 	const char fileName[] = "palette.txt";
+
+	const int startDist = 30;
 	//////////////////
 
 
@@ -229,13 +228,12 @@ int main(void) {
 	double score, highScore;
 
 	int dist, distSq;
-	double distScoreSq;
 
 	clock_t startTime;
 	double secondsOffset, secondsElapsed;
 
 
-	readRecord(fileName, &highScore, &dist, &circlesPlacedTotal, &secondsOffset, &distSq);
+	readRecord(fileName, &highScore, startDist, &dist, &distSq, &circlesPlacedTotal, &secondsOffset);
 
 	printf("-- RUNNING --\n");
 
@@ -254,12 +252,14 @@ int main(void) {
 			}
 		}
 
-		score = getScore(desiredCircleCount, circles, &distScoreSq);
+		score = getScore(desiredCircleCount, circles);
 
 		if (score > highScore) {
 			highScore = score;
 
-			dist = (int)sqrt(distScoreSq); // TODO: Find better heuristic.
+			// TODO: Find better heuristic.
+			dist++;
+
 			distSq = dist * dist;
 
 			secondsElapsed = (clock() - startTime) / (double)CLOCKS_PER_SEC + secondsOffset;
