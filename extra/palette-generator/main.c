@@ -43,7 +43,7 @@ double getScore(const int desiredCircleCount, int circles[], double *distScoreSq
 			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq; // min: (2 + 255/256) * bDiffSq, max: 2 * bDiffSq
 			
 			/*
-			// Simple euclidean distance. Doesn't reflect how eyes work.
+			// Simple euclidean distance. Doesn't mimic how human eyes perceive color.
 			rWeight = (r1 - r2) * (r1 - r2);
 			gWeight = (g1 - g2) * (g1 - g2);
 			bWeight = (b1 - b2) * (b1 - b2);
@@ -140,7 +140,7 @@ void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const in
 					close(mx+x, my+y, mz+z, w, wh, open, flat, flatIndexes);
 }
 
-void readRecord(const char fileName[], double *highScore, int *dist, int *circlesPlacedTotal, double *secondsOffset) {
+void readRecord(const char fileName[], double *highScore, int *dist, int *circlesPlacedTotal, double *secondsOffset, int *distSq) {
 	FILE *fpr;
 
 	fpr = fopen(fileName, "r");
@@ -148,13 +148,22 @@ void readRecord(const char fileName[], double *highScore, int *dist, int *circle
 	if (fpr != NULL) {
 		fscanf(fpr, "%lf %d %d %lf", highScore, dist, circlesPlacedTotal, secondsOffset);
 		fclose(fpr);
+
 		printf("LOADED: ");
-		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)(*highScore), *dist, *circlesPlacedTotal, (int)(*secondsOffset));
+		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start\n", (int)(*highScore), *dist, *circlesPlacedTotal, (int)(*secondsOffset));
+
+		*distSq = (*dist) * (*dist);
+
+		// To get deterministic results even when saving and loading multiple times, it's necessary for rand() to return the same values.
+		// The seed for rand() is always the same, so we just need to call rand() circlesPlacedTotal times to achieve determinism.
+		for (int i = 0; i < *circlesPlacedTotal; i++)
+			rand();
 	} else {
 		*highScore = 0;
 		*dist = 0;
 		*circlesPlacedTotal = 0;
 		*secondsOffset = 0;
+		*distSq = 0;
 	}
 }
 
@@ -183,9 +192,9 @@ int main(void) {
 	// CONFIGURABLE //
 	const int desiredCircleCount = 94; // 94 for ComputerCraft.
 
-	const int w = 256;
-	const int h = 256;
-	const int d = 256;
+	const int w = 256; // Width.
+	const int h = 256; // Height.
+	const int d = 256; // Depth.
 
 	const char fileName[] = "palette.txt";
 	//////////////////
@@ -209,14 +218,14 @@ int main(void) {
 	double score;
 
 	int dist;
+	int distSq;
 	double distScoreSq;
-	int distSq = 0;
 
 	clock_t startTime;
 	double secondsOffset, secondsElapsed;
 
 
-	readRecord(fileName, &highScore, &dist, &circlesPlacedTotal, &secondsOffset);
+	readRecord(fileName, &highScore, &dist, &circlesPlacedTotal, &secondsOffset, &distSq);
 
 	startTime = clock();
 
@@ -245,7 +254,7 @@ int main(void) {
 
 			writeRecord(fileName, highScore, dist, circlesPlacedTotal, secondsElapsed, desiredCircleCount, circles);
 
-			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the start\n", (int)highScore, dist, circlesPlacedTotal, (int)secondsElapsed);
+			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start\n", (int)highScore, dist, circlesPlacedTotal, (int)secondsElapsed);
 		}
 	}
 
