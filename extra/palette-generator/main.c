@@ -6,8 +6,6 @@
 
 
 double getScore(const int desiredCircleCount, int circles[]) {
-	double score = INT_MAX;
-
 	double r1, g1, b1, r2, g2, b2;
 
 	double rDiff, gDiff, bDiff;
@@ -16,7 +14,9 @@ double getScore(const int desiredCircleCount, int circles[]) {
 	double rAvg;
 
 	double rWeight, gWeight, bWeight;
+
 	double diff;
+	double score = INT_MAX;
 
 	for (int i = 0; i < desiredCircleCount - 1; i++) {
 		for (int j = i + 1; j < desiredCircleCount; j++) {
@@ -42,13 +42,15 @@ double getScore(const int desiredCircleCount, int circles[]) {
 			rWeight = (2 + rAvg / 256) * rDiffSq;         // min:  2 * rDiffSq           , max: (2 + 255/256) * rDiffSq
 			gWeight = 4 * gDiffSq;                        // min:  4 * gDiffSq           , max:  4 * gDiffSq
 			bWeight = (2 + (255 - rAvg) / 256) * bDiffSq; // min: (2 + 255/256) * bDiffSq, max:  2 * bDiffSq
-			
+
+
 			/*
 			// Simple euclidean distance. Doesn't mimic how human eyes perceive color.
 			rWeight = (r1 - r2) * (r1 - r2);
 			gWeight = (g1 - g2) * (g1 - g2);
 			bWeight = (b1 - b2) * (b1 - b2);
 			*/
+
 
 			diff = rWeight + gWeight + bWeight;
 
@@ -99,6 +101,7 @@ void reset(const int cellCount, int flat[], int flatIndexes[], int *circlesPlace
 		flat[i] = i;
 		flatIndexes[i] = i;
 	}
+
 	*circlesPlaced = 0;
 	*open = cellCount;
 }
@@ -114,7 +117,6 @@ int getRandomOpen(int flat[], const int *open) {
 }
 
 
-// Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
 void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const int h, const int d, const int wh, const int dist, const int distSq, int circles[], const int circlesPlacedIdx) {
 	const int i = getRandomOpen(flat, open);
 
@@ -134,8 +136,15 @@ void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const in
 	const int xMin = mx - dist < 0     ?   - mx     : - dist;
 	const int xMax = mx + dist > w - 1 ? w - mx - 1 :   dist;
 
-	// TODO: Try to replace these loops which go through the points in a cube with a loop that goes through the points of a sphere.
-	//       Make sure that it's both correct and faster though!
+	// TODO:
+	// Optimize this major bottleneck.
+	// This currently calls close() around (dist*2)^3 times, so for dist=60 that is 1.7 million times.
+	//
+	// Looping through the volume of a sphere instead of the volume of a cube would only be 91% faster[1].
+	// If done, it has to both still be correct and also faster!
+	//
+	// [1]: 1/(volumeSphere/volumeCube) = 1/0.524 = 1.91.
+
 	for(int z = zMin; z <= zMax; z++)
 		for(int y = yMin; y <= yMax; y++)
 			for(int x = xMin; x <= xMax; x++)
