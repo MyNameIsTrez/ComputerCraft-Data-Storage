@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 
+
 double getScore(const int desiredCircleCount, int circles[], double *distScoreSq) {
 	double score = INT_MAX;
 
@@ -61,6 +62,7 @@ double getScore(const int desiredCircleCount, int circles[], double *distScoreSq
 	return score;
 }
 
+
 /*
 ** Values in flat are (X,Y,Z) coordinates mapped to 1D.
 ** flatIndexes[n] returns the index of value n in flat.
@@ -94,6 +96,7 @@ void close(const int x, const int y, const int z, const int w, const int wh, int
 	} // else {} // When it has already been removed.
 }
 
+
 void reset(const int cellCount, int flat[], int flatIndexes[], int *circlesPlaced, int *open) {
 	for (int i = 0; i < cellCount; i++) {
 		flat[i] = i;
@@ -103,13 +106,16 @@ void reset(const int cellCount, int flat[], int flatIndexes[], int *circlesPlace
 	*open = cellCount;
 }
 
-double rand01(void) {
+
+double randNormalized(void) {
 	return rand() / (double)RAND_MAX;
 }
 
+
 int getRandomOpen(int flat[], const int *open) {
-	return flat[(int)(rand01() * (*open))];
+	return flat[(int)(randNormalized() * (*open))];
 }
+
 
 // Find faster algorithm, because this checks every cell in the shape of a cube, instead of a sphere.
 void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const int h, const int d, const int wh, const int dist, const int distSq, int circles[], const int circlesPlacedIdx) {
@@ -140,6 +146,7 @@ void placeCircle(int flat[], int flatIndexes[], int *open, const int w, const in
 					close(mx+x, my+y, mz+z, w, wh, open, flat, flatIndexes);
 }
 
+
 void readRecord(const char fileName[], double *highScore, int *dist, int *circlesPlacedTotal, double *secondsOffset, int *distSq) {
 	FILE *fpr;
 
@@ -149,15 +156,18 @@ void readRecord(const char fileName[], double *highScore, int *dist, int *circle
 		fscanf(fpr, "%lf %d %d %lf", highScore, dist, circlesPlacedTotal, secondsOffset);
 		fclose(fpr);
 
-		printf("LOADED: ");
-		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start\n", (int)(*highScore), *dist, *circlesPlacedTotal, (int)(*secondsOffset));
+		printf("-- LOADING --\n");
 
-		*distSq = (*dist) * (*dist);
+		printf("Calling rand() %d times...\n", *circlesPlacedTotal);
 
-		// To get deterministic results even when saving and loading multiple times, it's necessary for rand() to return the same values.
-		// The seed for rand() is always the same, so we just need to call rand() circlesPlacedTotal times to achieve determinism.
+		// To get deterministic results even when saving and loading multiple times, it's necessary for rand() to return the same values later on.
+		// The seed for rand() is always the same, so we just need to call rand() circlesPlacedTotal times to achieve this determinism.
 		for (int i = 0; i < *circlesPlacedTotal; i++)
 			rand();
+
+		printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start.\n\n", (int)(*highScore), *dist, *circlesPlacedTotal, (int)(*secondsOffset));
+
+		*distSq = (*dist) * (*dist);
 	} else {
 		*highScore = 0;
 		*dist = 0;
@@ -166,6 +176,7 @@ void readRecord(const char fileName[], double *highScore, int *dist, int *circle
 		*distSq = 0;
 	}
 }
+
 
 void writeRecord(const char fileName[], double highScore, int dist, int circlesPlacedTotal, double secondsElapsed, int desiredCircleCount, int circles[]) {
 	FILE *fpw;
@@ -188,6 +199,7 @@ void writeRecord(const char fileName[], double highScore, int dist, int circlesP
 	fclose(fpw);
 }
 
+
 int main(void) {
 	// CONFIGURABLE //
 	const int desiredCircleCount = 94; // 94 for ComputerCraft.
@@ -202,23 +214,21 @@ int main(void) {
 
 	const int wh = w * h;
 	const int cellCount = w * h * d;
-	
+
 	int *flat;
 	int *flatIndexes;
+
 	flat = malloc(cellCount * sizeof(int));
 	flatIndexes = malloc(cellCount * sizeof(int));
-	
-	int circlesPlaced;
-	int circlesPlacedTotal;
+
+	int circlesPlaced, circlesPlacedTotal;
 
 	int open;
 	int circles[desiredCircleCount * 3];
 
-	double highScore;
-	double score;
+	double score, highScore;
 
-	int dist;
-	int distSq;
+	int dist, distSq;
 	double distScoreSq;
 
 	clock_t startTime;
@@ -226,6 +236,8 @@ int main(void) {
 
 
 	readRecord(fileName, &highScore, &dist, &circlesPlacedTotal, &secondsOffset, &distSq);
+
+	printf("-- RUNNING --\n");
 
 	startTime = clock();
 
@@ -247,14 +259,14 @@ int main(void) {
 		if (score > highScore) {
 			highScore = score;
 
-			dist = (int)sqrt(distScoreSq); // TODO: Use better heuristic.
-			distSq = dist * dist; // TODO: Equal to "(int)distScoreSq"?
+			dist = (int)sqrt(distScoreSq); // TODO: Find better heuristic.
+			distSq = dist * dist;
 
 			secondsElapsed = (clock() - startTime) / (double)CLOCKS_PER_SEC + secondsOffset;
 
 			writeRecord(fileName, highScore, dist, circlesPlacedTotal, secondsElapsed, desiredCircleCount, circles);
 
-			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start\n", (int)highScore, dist, circlesPlacedTotal, (int)secondsElapsed);
+			printf("%d high score with a distance of %d after %d circles were placed in total, found after %d seconds since the very start.\n", (int)highScore, dist, circlesPlacedTotal, (int)secondsElapsed);
 		}
 	}
 
