@@ -61,7 +61,7 @@ function getRandomInt(max) {
 }
 
 
-function placeCircle(r, w, h, gridSize) {
+function placeCircle(r, w, h, gridSize, maxDistSq) {
   let xLeft, xRight; // Combined they mean the range of closed cells on a y-slice of the circle.
   let iLeft, iRight;
 
@@ -71,20 +71,44 @@ function placeCircle(r, w, h, gridSize) {
   let index;
   let mx, my;
 
+  let yDiffSq;
+  let distLeftSq, distRightSq;
+
   index = getRandomOpenIndex();
 
-  // index = 10;
+  // index = 36;
 
   // console.log(index);
 
   mx = index % w;
   my = Math.floor(index / w);
 
+  // console.log(`mx: ${mx}, my: ${my}`);
+
   // TODO: For simplicity this is assuming a square, but a circle would be more accurate.
   // m stands for middle.
-  for (let y = max(0, my - r); y < min(h, my + r); y++) {
+  for (let y = max(0, my - r); y < min(h, my + r + 1); y++) { // TODO: my + r instead?
     xLeft = max(0, mx - r);
-    xRight = min(h - 1, mx + r - 1);
+
+    yDiffSq = (my - y) ** 2;
+
+    // TODO: Replace with smart math to instantly calculate xLeft and xRight that fit inside of the circle.
+    distLeftSq = (mx - xLeft) ** 2 + yDiffSq;
+    while (distLeftSq > maxDistSq) { // TODO: May loop infinitely due to my - y?
+      xLeft++;
+      distLeftSq = (mx - xLeft) ** 2 + (my - y) ** 2;
+    }
+
+    xRight = min(h - 1, mx + r); // TODO: mx + r - 1 instead?
+
+    distRightSq = (xRight - mx) ** 2 + yDiffSq;
+
+    // console.log(`initial xRight: ${xRight}, (xRight - mx) ** 2: ${(xRight - mx) ** 2}, yDiffSq: ${yDiffSq}, distRightSq: ${distRightSq}`);
+
+    while (distRightSq > maxDistSq) {
+      xRight--;
+      distRightSq = (xRight - mx) ** 2 + yDiffSq;
+    }
 
     iLeft = xLeft + y * w;
     iRight = xRight + y * w;
@@ -93,14 +117,18 @@ function placeCircle(r, w, h, gridSize) {
     newRightRemovedIndexes.push(iRight);
 
     // console.log(`y: ${y}, xLeft: ${xLeft}, xRight: ${xRight}, iLeft: ${iLeft}, iRight: ${iRight}`);
+
+    const x1 = xLeft;
+    const y1 = y;
+    const x2 = xRight + 1;
+    const y2 = y + 1;
+    drawRect(x1, y1, x2, y2, w, h);
   }
 
   circlesPlaced++;
 
-  combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes);
+  combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes, w, h);
   calcOpenIndexes(gridSize);
-
-  drawCircle(mx, my, r, w, h);
 }
 
 
@@ -111,7 +139,7 @@ function placeCircle(r, w, h, gridSize) {
  ** [             ] + [[5,6], [9,10]] = [[5,6], [9,10]         ]
  ** [[5,6], [9,10]] + [[2,3], [6, 7]] = [[2,3], [5, 7], [9, 10]]
  */
-function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
+function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes, w, h) {
   let newLeftIsSmallest;
   let newIndex = 0;
   let oldIndex = 0;
@@ -236,27 +264,33 @@ function initDrawGrid() {
   const size = min(innerWidth - 1, innerHeight - 1);
   createCanvas(size, size);
 
-  stroke(200);
+//   stroke(200);
+//   fill(50, 200, 50);
+//   // fill(240, 240, 240);
+//   for (let y = 0; y < h; y++) {
+//     for (let x = 0; x < w; x++) {
+//       square(x * width / w, y * height / h, width / w);
+//     }
+//   }
 
-  fill(50, 200, 50);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      square(x * width / w, y * height / h, width / w);
-    }
-  }
-
-  fill(200, 50, 50);
-  // noStroke();
-  // stroke(100, 25, 25);
-  rectMode(RADIUS);
+  // rectMode(RADIUS);
+  rectMode(CORNERS);
   // ellipseMode(RADIUS);
+
+  noSmooth();
+
+  stroke(175, 50, 50);
+  fill(175, 50, 50);
 }
 
 
-function drawCircle(mx, my, r, w, h) {
+function drawRect(x1, y1, x2, y2, w, h) {
   // if (isClosed(x + y * w)) {
   // }
-  square(mx * width / w, my * height / h, r * width / w);
+  const widthMult = width / w;
+  const heightMult = height / h;
+  rect(x1 * widthMult, y1 * heightMult, x2 * widthMult, y2 * heightMult);
+  // square(mx * width / w, my * height / h, r * width / w);
   // circle(mx * width / w, my * height / h, r * width / w);
 }
 
@@ -281,14 +315,16 @@ function isClosed(index) {
 
 // USER SETTINGS //
 const circleCount = 1;
-const w = 100; // Width of grid.
-const h = 100; // Height of grid.
-const r = 1; // Radius of circle.
-const placeSpeedMultiplier = 10;
+const w = 256; // Width of grid.
+const h = 256; // Height of grid.
+const r = 4; // Radius of circle, 0 means a single cell.
+const placeSpeedMultiplier = 1;
 ///////////////////
 
 
 const gridSize = w * h;
+let colorIndex = 0;
+const maxDistSq = r ** 2;
 
 
 function setup() {
@@ -298,7 +334,8 @@ function setup() {
 
   // console.log("\n".repeat(100));
 
-  // placeCircle(r, w, h, gridSize);
+  // placeCircle(r, w, h, gridSize, maxDistSq);
+  // placeCircle(r, w, h, gridSize, maxDistSq);
 
   // for (let i = 0; i < circleCount; i++) {
   //   placeCircle(r, w, h, gridSize);
@@ -328,11 +365,25 @@ function setup() {
 
 
 function draw() {
-  // if (frameCount % 60 == 0) {
-  for (let i = 0; i < placeSpeedMultiplier; i++) {
-    if (leftOpenIndexes.length != 0) {
-      placeCircle(r, w, h, gridSize);
+  const colors = [
+    [50, 50, 200],
+    [50, 200, 50],
+    [50, 200, 200],
+    [200, 50, 50],
+    [200, 50, 200],
+    [200, 200, 50],
+    [200, 200, 200],
+  ];
+
+  if (frameCount % 2 == 0) {
+    const chosenColor = colors[colorIndex++ % colors.length];
+    fill(chosenColor);
+    stroke(chosenColor);
+
+    for (let i = 0; i < placeSpeedMultiplier; i++) {
+      if (leftOpenIndexes.length != 0) {
+        placeCircle(r, w, h, gridSize, maxDistSq);
+      }
     }
   }
-  // }
 }
