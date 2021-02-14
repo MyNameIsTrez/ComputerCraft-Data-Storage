@@ -72,8 +72,10 @@ function placeCircle(r, w, h, gridSize) {
   let mx, my;
 
   index = getRandomOpenIndex();
-  
-  console.log(index);
+
+  // index = 10;
+
+  // console.log(index);
 
   mx = index % w;
   my = Math.floor(index / w);
@@ -97,6 +99,8 @@ function placeCircle(r, w, h, gridSize) {
 
   combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes);
   calcOpenIndexes(gridSize);
+
+  drawCircle(mx, my, r, w, h);
 }
 
 
@@ -224,27 +228,36 @@ function calcOpenIndexes(gridSize) {
     rightOpenIndexes.push(gridSize - 1);
   }
 
-  console.log(leftOpenIndexes, rightOpenIndexes);
+  // console.log(leftOpenIndexes, rightOpenIndexes);
 }
 
 
 function initDrawGrid() {
-  createCanvas(400, 400);
+  const size = min(innerWidth - 1, innerHeight - 1);
+  createCanvas(size, size);
+
   stroke(200);
+
+  fill(50, 200, 50);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      square(x * width / w, y * height / h, width / w);
+    }
+  }
+
+  fill(200, 50, 50);
+  // noStroke();
+  // stroke(100, 25, 25);
+  rectMode(RADIUS);
+  // ellipseMode(RADIUS);
 }
 
 
-function drawGrid(w, h) {
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (isClosed(x + y * w)) {
-        fill(200, 50, 50);
-      } else {
-        fill(50, 200, 50);
-      }
-      square(x * 100, y * 100, 100);
-    }
-  }
+function drawCircle(mx, my, r, w, h) {
+  // if (isClosed(x + y * w)) {
+  // }
+  square(mx * width / w, my * height / h, r * width / w);
+  // circle(mx * width / w, my * height / h, r * width / w);
 }
 
 
@@ -266,30 +279,33 @@ function isClosed(index) {
 }
 
 
+// USER SETTINGS //
+const circleCount = 1;
+const w = 100; // Width of grid.
+const h = 100; // Height of grid.
+const r = 1; // Radius of circle.
+const placeSpeedMultiplier = 10;
+///////////////////
+
+
+const gridSize = w * h;
+
+
 function setup() {
-  // USER SETTINGS //
-  const circleCount = 1;
-  const w = 4; // Width of grid.
-  const h = 4; // Height of grid.
-  const r = 1; // Radius of circle.
-  ///////////////////
-
-
-  const gridSize = w * h;
-
-
   initDrawGrid();
 
   initOpenIndexes(gridSize);
-  
-  console.log("\n".repeat(100));
 
-  for (let i = 0; i < circleCount; i++) {
-    placeCircle(r, w, h, gridSize);
-    // console.log(leftOpenIndexes);
-  }
+  // console.log("\n".repeat(100));
 
-  drawGrid(w, h);
+  // placeCircle(r, w, h, gridSize);
+
+  // for (let i = 0; i < circleCount; i++) {
+  //   placeCircle(r, w, h, gridSize);
+  //   // console.log(leftOpenIndexes);
+  // }
+
+  // drawGrid(w, h);
 
 
   // console.log(leftOpenIndexes, rightOpenIndexes);
@@ -308,4 +324,15 @@ function setup() {
   // placeCircle(0, 4, r, w, h, gridSize);
   // placeCircle(4, 4, r, w, h, gridSize);
   // console.log(getRandomOpenIndex());  
+}
+
+
+function draw() {
+  // if (frameCount % 60 == 0) {
+  for (let i = 0; i < placeSpeedMultiplier; i++) {
+    if (leftOpenIndexes.length != 0) {
+      placeCircle(r, w, h, gridSize);
+    }
+  }
+  // }
 }
