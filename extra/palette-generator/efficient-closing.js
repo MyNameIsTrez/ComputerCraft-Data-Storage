@@ -58,7 +58,7 @@ function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
   let newIndex = 0;
   let oldIndex = 0;
   let combinedLeftRemovedIndexes, combinedRightRemovedIndexes;
-  
+
   const newLeftRemovedIndexesLength = newLeftRemovedIndexes.length;
   const oldLeftRemovedIndexesLength = leftRemovedIndexes.length;
 
@@ -72,6 +72,8 @@ function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
     leftRemovedIndexes = [...newLeftRemovedIndexes];
     rightRemovedIndexes = [...newRightRemovedIndexes];
   } else { // Combines leftRemovedIndexes and newLeftRemovedIndexes.
+    
+    // TODO: A pretty big optimization would be to reuse this array somehow.
     combinedLeftRemovedIndexes = [];
     combinedRightRemovedIndexes = [];
 
@@ -89,7 +91,7 @@ function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
       if (newLeftIsSmallest) {
         newRightRemovedIndex = newRightRemovedIndexes[newIndex];
 
-        // If newLeftRemovedIndex = 2 and minRight = 1 then this for-loop shouldn't be entered.
+        // If newLeftRemovedIndex = 2 and minRight = 1 then this for-loop isn't entered.
         // This is because in this example these ranges should be combined,
         // as there are no open spots between these closed ranges.
         if (combinedIndex > 0 && newLeftRemovedIndex > minRight + 1) {
@@ -126,13 +128,50 @@ function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
     rightRemovedIndexes = [...combinedRightRemovedIndexes];
   }
 
-  console.log(leftRemovedIndexes, rightRemovedIndexes);
+  // console.log(leftRemovedIndexes, rightRemovedIndexes);
 }
 
 
 // Gets openIndexes by inversing removedIndexes.
 function calcOpenIndexes(gridSize) {
-  
+  let leftRemovedIndex; // TODO: Default value?
+  let prevRightRemovedIndex; // TODO: Default to 0?
+
+  const leftRemovedIndexesLength = leftRemovedIndexes.length;
+  const rightRemovedIndexesLength = rightRemovedIndexes.length;
+
+  let firstRemovedIndex, lastRemovedIndex;
+
+  // TODO: A pretty big optimization would be to reuse this array somehow.
+  leftOpenIndexes = [];
+  rightOpenIndexes = [];
+
+  firstRemovedIndex = leftRemovedIndexes[0];
+  if (firstRemovedIndex != 0) {
+    leftOpenIndexes.push(0);
+    rightOpenIndexes.push(firstRemovedIndex - 1);
+  }
+
+  // TODO: Think of a better index tracking name for the love of god.
+  for (let removedIndexesIndex = 0; removedIndexesIndex < leftRemovedIndexesLength; removedIndexesIndex++) {
+    // There will always be open spaces between leftRemovedIndex and prevRightRemovedIndex, the code below just figures out from where to where.
+    leftRemovedIndex = leftRemovedIndexes[removedIndexesIndex];
+
+    if (removedIndexesIndex > 0) {
+      leftOpenIndexes.push(prevRightRemovedIndex + 1);
+      rightOpenIndexes.push(leftRemovedIndex - 1);
+    }
+
+    prevRightRemovedIndex = rightRemovedIndexes[removedIndexesIndex];
+  }
+
+  lastRemovedIndex = rightRemovedIndexes[rightRemovedIndexesLength - 1];
+  if (lastRemovedIndex != gridSize - 1) {
+    leftOpenIndexes.push(lastRemovedIndex + 1);
+    rightOpenIndexes.push(gridSize - 1);
+  }
+
+  console.log(leftOpenIndexes, rightOpenIndexes);
 }
 
 
@@ -154,4 +193,7 @@ function setup() {
   placeCircle(3, 1, flat, r, w, h, gridSize);
   placeCircle(1, 1, flat, r, w, h, gridSize);
   // placeCircle(0, 0, flat, r, w, h, gridSize);
+
+  // TODO: This throws an error!
+  // placeCircle(4, 4, flat, r, w, h, gridSize);
 }
