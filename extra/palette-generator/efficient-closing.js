@@ -10,23 +10,75 @@ let rightOpenIndexes = [];
 ////////////////////
 
 
-function initFlat(flat, w, h) {
-  for (let i = 0; i < w * h; i++) {
-    flat[i] = i;
+function initOpenIndexes(gridSize) {
+  leftOpenIndexes[0] = 0;
+  rightOpenIndexes[0] = gridSize - 1;
+}
+
+
+function getRandomOpenIndex() {
+  let nthOpenIndex = getRandomInt(getOpenIndexCount()) + 1; // TODO: Starts from 1, but may need to start from 0.
+  // console.log(`nthOpenIndex: ${nthOpenIndex}`);
+
+  const leftOpenIndexesLength = leftOpenIndexes.length;
+
+  let openIndexesSeen = 0;
+  let difference, closedIndex, openIndexesToSee;
+
+  for (let index = 0; index < leftOpenIndexesLength; index++) {
+    difference = rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
+    // console.log(`difference: ${difference}`);
+    // console.log(`openIndexesSeen + difference: ${openIndexesSeen + difference}`);
+
+    if (openIndexesSeen + difference >= nthOpenIndex) {
+      closedIndex = leftOpenIndexes[index] - 1;
+      openIndexesToSee = nthOpenIndex - openIndexesSeen;
+      return closedIndex + openIndexesToSee;
+    } else {
+      openIndexesSeen += difference;
+    }
   }
 }
 
 
-function placeCircle(mx, my, flat, r, w, h, gridSize) {
+function getOpenIndexCount() {
+  let openIndexCount = 0;
+  let difference;
+
+  const leftOpenIndexesLength = leftOpenIndexes.length;
+
+  for (let index = 0; index < leftOpenIndexesLength; index++) {
+    difference = rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
+    openIndexCount += difference;
+  }
+
+  return openIndexCount;
+}
+
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
+
+function placeCircle(r, w, h, gridSize) {
   let xLeft, xRight; // Combined they mean the range of closed cells on a y-slice of the circle.
   let iLeft, iRight;
 
   let newLeftRemovedIndexes = [];
   let newRightRemovedIndexes = [];
 
+  let index;
+  let mx, my;
+
+  index = getRandomOpenIndex();
+
+  mx = index % w;
+  my = Math.floor(index / w);
+
   // TODO: For simplicity this is assuming a square, but a circle would be more accurate.
   // m stands for middle.
-  for (let y = max(0, my - r); y < min(h - 1, my + r); y++) {
+  for (let y = max(0, my - r); y < min(h, my + r); y++) {
     xLeft = max(0, mx - r);
     xRight = min(h - 1, mx + r - 1);
 
@@ -72,7 +124,7 @@ function combineRemovedIndexes(newLeftRemovedIndexes, newRightRemovedIndexes) {
     leftRemovedIndexes = [...newLeftRemovedIndexes];
     rightRemovedIndexes = [...newRightRemovedIndexes];
   } else { // Combines leftRemovedIndexes and newLeftRemovedIndexes.
-    
+
     // TODO: A pretty big optimization would be to reuse this array somehow.
     combinedLeftRemovedIndexes = [];
     combinedRightRemovedIndexes = [];
@@ -152,7 +204,6 @@ function calcOpenIndexes(gridSize) {
     rightOpenIndexes.push(firstRemovedIndex - 1);
   }
 
-  // TODO: Think of a better index tracking name for the love of god.
   for (let removedIndexesIndex = 0; removedIndexesIndex < leftRemovedIndexesLength; removedIndexesIndex++) {
     // There will always be open spaces between leftRemovedIndex and prevRightRemovedIndex, the code below just figures out from where to where.
     leftRemovedIndex = leftRemovedIndexes[removedIndexesIndex];
@@ -171,7 +222,45 @@ function calcOpenIndexes(gridSize) {
     rightOpenIndexes.push(gridSize - 1);
   }
 
-  console.log(leftOpenIndexes, rightOpenIndexes);
+  // console.log(leftOpenIndexes, rightOpenIndexes);
+}
+
+
+function initDrawGrid() {
+  createCanvas(400, 400);
+  stroke(200);
+}
+
+
+function drawGrid(w, h) {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (isClosed(x + y * w)) {
+        fill(200, 50, 50);
+      } else {
+        fill(50, 200, 50);
+      }
+      square(x * 100, y * 100, 100);
+    }
+  }
+}
+
+
+function isClosed(index) {
+  const leftRemovedIndexesLength = leftRemovedIndexes.length;
+  
+  let leftRemovedIndex, rightRemovedIndex;
+  
+  for (let removedIndexesIndex = 0; removedIndexesIndex < leftRemovedIndexesLength; removedIndexesIndex++) {
+    leftRemovedIndex = leftRemovedIndexes[removedIndexesIndex];
+    rightRemovedIndex = rightRemovedIndexes[removedIndexesIndex];
+    
+    if (index >= leftRemovedIndex && index <= rightRemovedIndex) {
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 
@@ -183,17 +272,34 @@ function setup() {
   ///////////////////
 
 
-  let flat = [];
   const gridSize = w * h;
 
 
-  initFlat(flat, w, h);
+  initDrawGrid();
 
-  placeCircle(2, 2, flat, r, w, h, gridSize);
-  placeCircle(3, 1, flat, r, w, h, gridSize);
-  placeCircle(1, 1, flat, r, w, h, gridSize);
-  // placeCircle(0, 0, flat, r, w, h, gridSize);
+  initOpenIndexes(gridSize);
 
-  // TODO: This throws an error!
-  // placeCircle(4, 4, flat, r, w, h, gridSize);
+  placeCircle(r, w, h, gridSize);
+  
+  // placeCircle(r, w, h, gridSize);
+  
+  drawGrid(w, h);
+
+  
+  // console.log(leftOpenIndexes, rightOpenIndexes);
+  // console.log(getRandomOpenIndex());
+
+  // placeCircle(2, 2, r, w, h, gridSize);
+  // placeCircle(3, 1, r, w, h, gridSize);
+  // placeCircle(1, 1, r, w, h, gridSize);
+  // placeCircle(4, 4, r, w, h, gridSize);
+  // placeCircle(0, 4, r, w, h, gridSize);
+  // placeCircle(0, 0, r, w, h, gridSize);
+
+  // Test the corners.
+  // placeCircle(0, 0, r, w, h, gridSize);
+  // placeCircle(4, 0, r, w, h, gridSize);
+  // placeCircle(0, 4, r, w, h, gridSize);
+  // placeCircle(4, 4, r, w, h, gridSize);
+  // console.log(getRandomOpenIndex());  
 }
