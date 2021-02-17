@@ -2,11 +2,13 @@
 // TODO: In C these globals should be replaced and be passed by address.
 let circlesPlaced = 0;
 
-let leftRemovedIndexes = [];
-let rightRemovedIndexes = [];
-
 let leftOpenIndexes = [];
 let rightOpenIndexes = [];
+
+let placed = 0;
+let prevTime = performance.now();
+
+let drawing = true;
 ////////////////////
 
 
@@ -61,7 +63,8 @@ function getRandomInt(max) {
 }
 
 
-function placeCircle(index, r, w, h, gridSize, maxDistSq) {
+// function placeCircle(index, r, w, h, gridSize, maxDistSq) {
+function placeCircle(r, w, h, gridSize, maxDistSq) {
   let xClosedLeft, xClosedRight;
   let iClosedLeft, iClosedRight;
   let iOpenLeft, iOpenRight;
@@ -69,12 +72,12 @@ function placeCircle(index, r, w, h, gridSize, maxDistSq) {
   let newLeftOpenIndexes = [];
   let newRightOpenIndexes = [];
 
-  // let index;
+  let index;
   let mx, my;
 
   let yDiffSq;
 
-  // index = getRandomOpenIndex();
+  index = getRandomOpenIndex();
 
   // index = 15;
 
@@ -90,14 +93,16 @@ function placeCircle(index, r, w, h, gridSize, maxDistSq) {
 
     xClosedLeft = getXClosedLeft(mx, r, yDiffSq, maxDistSq);
     xClosedRight = getXClosedRight(h, mx, r, yDiffSq, maxDistSq);
-    
-    
-    const x1 = xClosedLeft;
-    const y1 = y;
-    const x2 = xClosedRight + 1;
-    const y2 = y + 1;
-    drawRect(x1, y1, x2, y2, w, h);
-    
+
+
+    if (drawing) {
+      // Figure out if this is inlined in C.
+      // const x1 = xClosedLeft;
+      // const y1 = y;
+      // const x2 = xClosedRight + 1;
+      // const y2 = y + 1;
+      drawRect(xClosedLeft, y, xClosedRight + 1, y + 1, w, h);
+    }
 
     iClosedLeft = xClosedLeft + y * w;
     iClosedRight = xClosedRight + y * w;
@@ -184,31 +189,54 @@ function getXClosedRight(h, mx, r, yDiffSq, maxDistSq) {
 
 
 /*
- ** Combines the ranges of removed indexes.
- ** For example, [5, 7] means index 5, 6 and 7 are removed.
+ ** Combines the ranges of open indexes.
+ ** It does this by doing an AND operation on the ranges.
+ ** [5, 7] means index 5, 6 and 7 are open.
  **
- ** [             ] + [[5,6], [9,10]] = [[5,6], [9,10]         ]
- ** [[5,6], [9,10]] + [[2,3], [6, 7]] = [[2,3], [5, 7], [9, 10]]
+ ** [     [1,15]     ] + [ [5,6], [9,10] ] = [ [5,6], [9,10] ]
+ ** [ [5, 6], [9,10] ] + [ [2,3], [6, 7] ] = [     [6,6]     ]
  */
 function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridSize) {
-  // console.log(newLeftOpenIndexes, newRightOpenIndexes);
+  let oldLeftOpenIndexes = [...leftOpenIndexes];
+  let oldRightOpenIndexes = [...rightOpenIndexes];
 
-  console.log(leftOpenIndexes, rightOpenIndexes);
+  const oldOpenIndexesLength = oldLeftOpenIndexes.length;
+  const newOpenIndexesLength = newLeftOpenIndexes.length;
+
+  let oldIndex = 0,
+    newIndex = 0;
+
+  let start, end;
+
+  let combinedLeftOpenIndexes = [];
+  let combinedRightOpenIndexes = [];
+
+  while (oldIndex < oldOpenIndexesLength) {
+    start = max(oldLeftOpenIndexes[oldIndex], newLeftOpenIndexes[newIndex]);
+    end = min(oldRightOpenIndexes[oldIndex], newRightOpenIndexes[newIndex]);
+
+    if (end >= start) {
+      combinedLeftOpenIndexes.push(start);
+      combinedRightOpenIndexes.push(end);
+    }
+
+    if (newIndex + 1 <= newOpenIndexesLength && newLeftOpenIndexes[newIndex + 1] <= oldRightOpenIndexes[oldIndex]) {
+      newIndex++;
+    } else {
+      oldIndex++;
+    }
+  }
+
+  leftOpenIndexes = [...combinedLeftOpenIndexes];
+  rightOpenIndexes = [...combinedRightOpenIndexes];
+
+  // console.log(leftOpenIndexes, rightOpenIndexes);
 }
 
 
 function initDrawGrid() {
   const size = min(innerWidth - 1, innerHeight - 1);
   createCanvas(size, size);
-
-  //   stroke(200);
-  //   fill(50, 200, 50);
-  //   // fill(240, 240, 240);
-  //   for (let y = 0; y < h; y++) {
-  //     for (let x = 0; x < w; x++) {
-  //       square(x * width / w, y * height / h, width / w);
-  //     }
-  //   }
 
   // rectMode(RADIUS);
   rectMode(CORNERS);
@@ -222,8 +250,6 @@ function initDrawGrid() {
 
 
 function drawRect(x1, y1, x2, y2, w, h) {
-  // if (isClosed(x + y * w)) {
-  // }
   const widthMult = width / w;
   const heightMult = height / h;
   rect(x1 * widthMult, y1 * heightMult, x2 * widthMult, y2 * heightMult);
@@ -232,30 +258,12 @@ function drawRect(x1, y1, x2, y2, w, h) {
 }
 
 
-function isClosed(index) {
-  const leftRemovedIndexesLength = leftRemovedIndexes.length;
-
-  let leftRemovedIndex, rightRemovedIndex;
-
-  for (let removedIndexesIndex = 0; removedIndexesIndex < leftRemovedIndexesLength; removedIndexesIndex++) {
-    leftRemovedIndex = leftRemovedIndexes[removedIndexesIndex];
-    rightRemovedIndex = rightRemovedIndexes[removedIndexesIndex];
-
-    if (index >= leftRemovedIndex && index <= rightRemovedIndex) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-
 // USER SETTINGS //
 const circleCount = 1;
-const w = 4; // Width of grid.
-const h = 4; // Height of grid.
-const r = 1; // Radius of circle, 0 means a single cell.
-const placeSpeedMultiplier = 1;
+const w = 256; // Width of grid.
+const h = 256; // Height of grid.
+const r = 3; // Radius of circle, 0 means a single cell.
+const placeSpeedMultiplier = 10;
 ///////////////////
 
 
@@ -269,61 +277,46 @@ function setup() {
 
   initOpenIndexes(gridSize);
 
-  // console.log("\n".repeat(100));
-
-  placeCircle(0, r, w, h, gridSize, maxDistSq);
-  placeCircle(3, r, w, h, gridSize, maxDistSq);
-  placeCircle(12, r, w, h, gridSize, maxDistSq);
-  placeCircle(15, r, w, h, gridSize, maxDistSq);
-  // placeCircle(r, w, h, gridSize, maxDistSq);
-
-  // for (let i = 0; i < circleCount; i++) {
-  //   placeCircle(r, w, h, gridSize);
-  //   // console.log(leftOpenIndexes);
-  // }
-
-  // drawGrid(w, h);
-
-
-  // console.log(leftOpenIndexes, rightOpenIndexes);
-  // console.log(getRandomOpenIndex());
-
-  // placeCircle(2, 2, r, w, h, gridSize);
-  // placeCircle(3, 1, r, w, h, gridSize);
-  // placeCircle(1, 1, r, w, h, gridSize);
-  // placeCircle(4, 4, r, w, h, gridSize);
-  // placeCircle(0, 4, r, w, h, gridSize);
-  // placeCircle(0, 0, r, w, h, gridSize);
+  // placeCircle(0, r, w, h, gridSize, maxDistSq);
+  // placeCircle(7, r, w, h, gridSize, maxDistSq);
 
   // Test the corners.
   // placeCircle(0, 0, r, w, h, gridSize);
   // placeCircle(4, 0, r, w, h, gridSize);
   // placeCircle(0, 4, r, w, h, gridSize);
   // placeCircle(4, 4, r, w, h, gridSize);
-  // console.log(getRandomOpenIndex());  
 }
 
 
-// function draw() {
-//   const colors = [
-//     [50, 50, 200],
-//     [50, 200, 50],
-//     [50, 200, 200],
-//     [200, 50, 50],
-//     [200, 50, 200],
-//     [200, 200, 50],
-//     [200, 200, 200],
-//   ];
+function draw() {
+  const colors = [
+    [50, 50, 200],
+    [50, 200, 50],
+    [50, 200, 200],
+    [200, 50, 50],
+    [200, 50, 200],
+    [200, 200, 50],
+    [200, 200, 200],
+  ];
 
-//   if (frameCount % 2 == 0) {
-//     const chosenColor = colors[colorIndex++ % colors.length];
-//     fill(chosenColor);
-//     stroke(chosenColor);
+  let chosenColor;
 
-//     for (let i = 0; i < placeSpeedMultiplier; i++) {
-//       if (leftOpenIndexes.length != 0) {
-//         placeCircle(r, w, h, gridSize, maxDistSq);
-//       }
-//     }
-//   }
-// }
+  if (frameCount % 1 == 0) {
+    chosenColor = colors[colorIndex++ % colors.length];
+    fill(chosenColor);
+    stroke(chosenColor);
+
+    for (let i = 0; i < placeSpeedMultiplier; i++) {
+      if (leftOpenIndexes.length != 0) {
+        placeCircle(r, w, h, gridSize, maxDistSq);
+        placed++;
+      }
+    }
+  }
+
+  if (frameCount % 60 == 0) {
+    console.log(`open: ${leftOpenIndexes.length}, placed/IRL second: ${placed/((performance.now()-prevTime)/1000)}`);
+    placed = 0;
+    prevTime = performance.now();
+  }
+}
