@@ -1,14 +1,26 @@
 ////////////////////
-// TODO: In C these globals should be replaced and be passed by address.
-let circlesPlaced = 0;
+// TODO: In C, these globals should be moved to main() and passed by address.
+
+// USER SETTINGS //
+const circleCount = 1;
+const w = 256; // Width of grid.
+const h = 256; // Height of grid.
+const r = 1; // Radius of circle, 0 means a single 1x1 cell.
+const placeSpeedMultiplier = 10; // 10
+const drawing = true;
+///////////////////
+const gridSize = w * h;
+const maxDistSq = r ** 2;
 
 let leftOpenIndexes = [];
 let rightOpenIndexes = [];
 
 let placed = 0;
+let prevOpen = 0,
+  prevPlacedPerSec = 0;
 let prevTime = performance.now();
 
-let drawing = true;
+let colorIndex = 0;
 ////////////////////
 
 
@@ -64,7 +76,7 @@ function getRandomInt(max) {
 
 
 // function placeCircle(index, r, w, h, gridSize, maxDistSq) {
-function placeCircle(r, w, h, gridSize, maxDistSq) {
+  function placeCircle(r, w, h, gridSize, maxDistSq) {
   let xClosedLeft, xClosedRight;
   let iClosedLeft, iClosedRight;
   let iOpenLeft, iOpenRight;
@@ -72,14 +84,11 @@ function placeCircle(r, w, h, gridSize, maxDistSq) {
   let newLeftOpenIndexes = [];
   let newRightOpenIndexes = [];
 
-  let index;
   let mx, my;
 
   let yDiffSq;
 
-  index = getRandomOpenIndex();
-
-  // index = 15;
+  const index = getRandomOpenIndex();
 
   mx = index % w;
   my = Math.floor(index / w);
@@ -121,8 +130,6 @@ function placeCircle(r, w, h, gridSize, maxDistSq) {
   if (getLastIClosedRight(my, r, h, mx, maxDistSq, w) != gridSize - 1) {
     newRightOpenIndexes.push(gridSize - 1);
   }
-
-  circlesPlaced++;
 
   combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridSize);
 }
@@ -203,27 +210,46 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
   const oldOpenIndexesLength = oldLeftOpenIndexes.length;
   const newOpenIndexesLength = newLeftOpenIndexes.length;
 
-  let oldIndex = 0,
+  let oldIndex,
     newIndex = 0;
+
+  let newLeftIndex, newRightIndex, newLeftIndexNext;
 
   let start, end;
 
-  let combinedLeftOpenIndexes = [];
+  let combinedLeftOpenIndexes = []; // Max indexes can be calculated and used so this array can be recycled in C.
   let combinedRightOpenIndexes = [];
 
-  while (oldIndex < oldOpenIndexesLength) {
-    start = max(oldLeftOpenIndexes[oldIndex], newLeftOpenIndexes[newIndex]);
-    end = min(oldRightOpenIndexes[oldIndex], newRightOpenIndexes[newIndex]);
+  let closestIndex;
 
-    if (end >= start) {
-      combinedLeftOpenIndexes.push(start);
-      combinedRightOpenIndexes.push(end);
-    }
+  for (let newIndex = 0; newIndex < newOpenIndexesLength; newIndex++) {
+    oldIndex = binarySearchClosest(newLeftOpenIndexes[newIndex], newRightOpenIndexes[newIndex], oldLeftOpenIndexes, oldRightOpenIndexes);
 
-    if (newIndex + 1 <= newOpenIndexesLength && newLeftOpenIndexes[newIndex + 1] <= oldRightOpenIndexes[oldIndex]) {
-      newIndex++;
-    } else {
-      oldIndex++;
+    // console.log(`newLeftOpenIndexes[newIndex]: ${newLeftOpenIndexes[newIndex]}, newRightOpenIndexes[newIndex]: ${newRightOpenIndexes[newIndex]}, oldLeftOpenIndexes: ${oldLeftOpenIndexes}, oldRightOpenIndexes: ${oldRightOpenIndexes}`);
+    // console.log(`oldIndex: ${oldIndex}`);
+
+    if (oldIndex == -1) continue; // Error handling may be unnecessary.
+
+    newLeftIndex = newLeftOpenIndexes[newIndex];
+    newRightIndex = newRightOpenIndexes[newIndex];
+
+    newLeftIndexNext = newLeftOpenIndexes[newIndex + 1];
+
+    while (oldIndex < oldOpenIndexesLength) {
+      start = Math.max(oldLeftOpenIndexes[oldIndex], newLeftIndex);
+      end = Math.min(oldRightOpenIndexes[oldIndex], newRightIndex);
+
+      if (end >= start) {
+        combinedLeftOpenIndexes.push(start);
+        combinedRightOpenIndexes.push(end);
+      }
+
+      if (newIndex + 1 <= newOpenIndexesLength && newLeftIndexNext <= oldRightOpenIndexes[oldIndex]) {
+        // newIndex++;
+        break;
+      } else {
+        oldIndex++;
+      }
     }
   }
 
@@ -231,6 +257,39 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
   rightOpenIndexes = [...combinedRightOpenIndexes];
 
   // console.log(leftOpenIndexes, rightOpenIndexes);
+  // console.log();
+}
+
+
+
+function binarySearchClosest(newLeft, newRight, oldLeftArr, oldRightArr) {
+  const value = newLeft;
+
+  if (newRight < oldLeftArr[0]) return -1; // -1 means that it should be skipped, might be an unnecessary check.
+  if (newLeft > oldRightArr[oldRightArr.length - 1]) return -1;
+
+  // TODO: In C this function could just use ints here instead of lets so the Math.floor below can be removed.
+  let low = 0;
+  let high = oldLeftArr.length - 1;
+  let mid;
+
+  while (low <= high) {
+    mid = Math.floor((high + low) / 2);
+    // console.log(`low: ${low}, mid: ${mid}, high: ${high}, value: ${value}, oldLeftArr[mid]: ${oldLeftArr[mid]}, value < oldLeftArr[mid]: ${value < oldLeftArr[mid]}`);
+
+    if (value < oldLeftArr[mid]) {
+      high = mid - 1;
+    } else if (value > oldLeftArr[mid]) {
+      low = mid + 1;
+    } else {
+      // console.log("return 1");
+      return mid;
+    }
+  }
+  // console.log("return 2");
+  // console.log(`low: ${low}, high: ${high}`);
+  return Math.max(0, high); // This probably won't work in all cases.
+  // return (oldLeftArr[low] - value) < (value - oldLeftArr[high]) ? low : high;
 }
 
 
@@ -258,26 +317,13 @@ function drawRect(x1, y1, x2, y2, w, h) {
 }
 
 
-// USER SETTINGS //
-const circleCount = 1;
-const w = 256; // Width of grid.
-const h = 256; // Height of grid.
-const r = 3; // Radius of circle, 0 means a single cell.
-const placeSpeedMultiplier = 10;
-///////////////////
-
-
-const gridSize = w * h;
-let colorIndex = 0;
-const maxDistSq = r ** 2;
-
-
 function setup() {
   initDrawGrid();
 
   initOpenIndexes(gridSize);
 
   // placeCircle(0, r, w, h, gridSize, maxDistSq);
+  // placeCircle(getRandomOpenIndex(), r, w, h, gridSize, maxDistSq);
   // placeCircle(7, r, w, h, gridSize, maxDistSq);
 
   // Test the corners.
@@ -315,7 +361,11 @@ function draw() {
   }
 
   if (frameCount % 60 == 0) {
-    console.log(`open: ${leftOpenIndexes.length}, placed/IRL second: ${placed/((performance.now()-prevTime)/1000)}`);
+    const open = leftOpenIndexes.length;
+    const placedPerSec = Math.floor(placed / ((performance.now() - prevTime) / 1000));
+    console.log(`open: ${open} (${open-prevOpen}), placed/second: ${placedPerSec} (${placedPerSec-prevPlacedPerSec})`);
+    prevOpen = open;
+    prevPlacedPerSec = placedPerSec;
     placed = 0;
     prevTime = performance.now();
   }
