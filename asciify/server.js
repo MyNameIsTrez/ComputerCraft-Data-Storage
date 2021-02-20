@@ -151,9 +151,26 @@ app.get("/test-res-send-random", (req, res) => res.send(Math.random().toString()
 app.post("/mirror-message", (req, res) => res.send(req.body));
 
 
+
+/* HTTPS download command:
+h=io.open("https","w")h:write(http.get("http://h2896147.stratoserver.net:3000".."/https-download").readAll())h:close()
+*/
+app.get("/https-download", (req, res) => {
+	console.log("/https-download request received.")
+	res.download("https/https")
+})
+
+/* HTTPS example download command:
+h=io.open("example","w")h:write(http.get("http://h2896147.stratoserver.net:3000".."/https-example-download").readAll())h:close()
+*/
+app.get("/https-example-download", (req, res) => {
+	console.log("/https-example-download request received.")
+	res.download("https/https-example")
+})
+
 // TODO: Refactor and move into its own file!
 app.get("/https", (req, res) => {
-	console.log("Request received")
+	console.log("/https request received.")
 	if (req.query.url !== undefined) {
 		https.get(req.query.url, (resp) => {
 			let body = ""
@@ -164,11 +181,10 @@ app.get("/https", (req, res) => {
 			})
 		})
 	} else {
-		console.log("Error: Couldn't extract query url")
+		console.log("Error: Couldn't extract query url.")
 		res.end()
 	}
 });
-
 
 
 
