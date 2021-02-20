@@ -4,6 +4,8 @@ const bodyParser = require("body-parser")
 const Datastore = require("nedb")
 const { spawn } = require("child_process")
 const WebSocket = require("ws")
+const util = require("util")
+const https = require("https")
 
 
 const app = express()
@@ -138,12 +140,34 @@ app.post("/get-ascii-subfile", (req, res) => {
 })
 
 app.get("/test-res-end", (req, res) => res.end());
-app.get("/test-res-send", (req, res) => res.send("foo!"));
+
+app.get("/test-res-send", (req, res) => {
+	console.log("Request received")
+	res.send("foo!")
+});
+
 app.get("/test-res-send-random", (req, res) => res.send(Math.random().toString()));
 
 app.post("/mirror-message", (req, res) => res.send(req.body));
 
 
+// TODO: Refactor and move into its own file!
+app.get("/https", (req, res) => {
+	console.log("Request received")
+	if (req.query.url !== undefined) {
+		https.get(req.query.url, (resp) => {
+			let body = ""
+			resp.on("data", chunk => {
+				body += chunk
+			}).on("end", () => {
+				res.send(body)
+			})
+		})
+	} else {
+		console.log("Error: Couldn't extract query url")
+		res.end()
+	}
+});
 
 
 
