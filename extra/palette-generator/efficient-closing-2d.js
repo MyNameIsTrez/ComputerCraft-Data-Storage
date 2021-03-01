@@ -76,7 +76,7 @@ function getRandomInt(max) {
 
 
 // function placeCircle(index, r, w, h, gridSize, maxDistSq) {
-  function placeCircle(r, w, h, gridSize, maxDistSq) {
+function placeCircle(r, w, h, gridSize, maxDistSq) {
   let xClosedLeft, xClosedRight;
   let iClosedLeft, iClosedRight;
   let iOpenLeft, iOpenRight;
