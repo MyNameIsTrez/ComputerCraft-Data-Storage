@@ -55,7 +55,7 @@ function getRandomOpenIndex() {
 }
 
 
-function getOpenIndexCount() {
+function getOpenIndexCount() { // TODO: Replace with code that continuously decrements openIndexCount instead for better time complexity.
   let openIndexCount = 0;
   let difference;
 
