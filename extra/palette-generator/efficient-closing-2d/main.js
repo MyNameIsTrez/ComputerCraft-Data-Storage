@@ -2,23 +2,31 @@
 
 // USER SETTINGS //
 
-const w = 256; // Width of grid.
-const h = 256; // Height of grid.
-const r = 1; // Radius of circle, 0 means a single 1x1 cell.
-const placeSpeedMultiplier = 10; // 10
-const drawing = true;
+let w = 256; // Width of grid.
+let h = 256; // Height of grid.
+let r = 1; // Radius of circle, 0 means a single 1x1 cell.
+
+const runTestsBool = true;
 
 // NOT USER SETTINGS //
 
-const gridSize = w * h;
-const maxDistSq = r ** 2;
+let gridSize = w * h;
+let maxDistSq = r ** 2;
 
-let leftOpenIndexes = [];
-let rightOpenIndexes = [];
+let leftOpenIndexes;
+let rightOpenIndexes;
+
+let testNumber = 0;
+let allTestsPassed = true;
+
+//// USED IN DRAWCIRCLES() ////
+
+const placeSpeedMultiplier = 1; // 10
+const drawing = true;
 
 let placed = 0;
-let prevOpen = 0,
-  prevPlacedPerSec = 0;
+let prevOpen = 0;
+let prevPlacedPerSec = 0;
 let prevTime = performance.now();
 
 let colorIndex = 0;
@@ -26,9 +34,12 @@ let colorIndex = 0;
 ////////////////////
 
 
-function initOpenIndexes(gridSize) {
-  leftOpenIndexes[0] = 0;
-  rightOpenIndexes[0] = gridSize - 1;
+function initOpenIndexes() {
+    leftOpenIndexes = [];
+    rightOpenIndexes = [];
+    
+    leftOpenIndexes[0] = 0;
+    rightOpenIndexes[0] = gridSize - 1;
 }
 
 
@@ -78,7 +89,7 @@ function getRandomInt(max) {
 
 
 // function placeCircle(index, r, w, h, gridSize, maxDistSq) {
-function placeCircle(r, w, h, gridSize, maxDistSq) {
+function placeCircle(index, r, w, h, gridSize, maxDistSq) {
   let xClosedLeft, xClosedRight;
   let iClosedLeft, iClosedRight;
   let iOpenLeft, iOpenRight;
@@ -89,8 +100,6 @@ function placeCircle(r, w, h, gridSize, maxDistSq) {
   let mx, my;
 
   let yDiffSq;
-
-  const index = getRandomOpenIndex();
 
   mx = index % w;
   my = Math.floor(index / w);
@@ -296,11 +305,12 @@ function binarySearchClosest(newLeft, newRight, oldLeftArr, oldRightArr) {
 
 
 function initDrawGrid() {
-  const size = Math.min(innerWidth - 1, innerHeight - 1);
-  createCanvas(size, size);
+  const sideLength = Math.min(innerWidth - 1, innerHeight - 1);
+  createCanvas(sideLength, sideLength);
 
   // rectMode(RADIUS);
   rectMode(CORNERS);
+  textAlign(CENTER, CENTER);
   // ellipseMode(RADIUS);
 
   noSmooth();
@@ -322,53 +332,141 @@ function drawRect(x1, y1, x2, y2, w, h) {
 function setup() {
   initDrawGrid();
 
-  initOpenIndexes(gridSize);
-
-  // placeCircle(0, r, w, h, gridSize, maxDistSq);
-  // placeCircle(getRandomOpenIndex(), r, w, h, gridSize, maxDistSq);
-  // placeCircle(7, r, w, h, gridSize, maxDistSq);
-
-  // Test the corners.
-  // placeCircle(0, 0, r, w, h, gridSize);
-  // placeCircle(4, 0, r, w, h, gridSize);
-  // placeCircle(0, 4, r, w, h, gridSize);
-  // placeCircle(4, 4, r, w, h, gridSize);
+  if (runTestsBool) {
+    runTests();
+  } else {
+    initOpenIndexes();
+  }
 }
 
 
 function draw() {
-  const colors = [
-    [50, 50, 200],
-    [50, 200, 50],
-    [50, 200, 200],
-    [200, 50, 50],
-    [200, 50, 200],
-    [200, 200, 50],
-    [200, 200, 200],
-  ];
-
-  let chosenColor;
-
-  if (frameCount % 1 == 0) {
-    chosenColor = colors[colorIndex++ % colors.length];
-    fill(chosenColor);
-    stroke(chosenColor);
-
-    for (let i = 0; i < placeSpeedMultiplier; i++) {
-      if (leftOpenIndexes.length != 0) {
-        placeCircle(r, w, h, gridSize, maxDistSq);
-        placed++;
-      }
+    if (!runTestsBool) {
+        drawCircles();
     }
-  }
+}
 
-  if (frameCount % 60 == 0) {
-    const open = leftOpenIndexes.length;
-    const placedPerSec = Math.floor(placed / ((performance.now() - prevTime) / 1000));
-    console.log(`open: ${open} (${open-prevOpen}), placed/second: ${placedPerSec} (${placedPerSec-prevPlacedPerSec})`);
-    prevOpen = open;
-    prevPlacedPerSec = placedPerSec;
-    placed = 0;
-    prevTime = performance.now();
-  }
+
+function runTests() {
+    w = 5;
+    h = 5;
+    
+    gridSize = w * h;
+    maxDistSq = r ** 2;
+
+    test(0, [2, 6], [4, 24]);
+    test(9, [3, 6, 10, 15], [3, 7, 13, 24]);
+    // test(7, [2, 6], [4, 24]);
+
+    // placeCircle(7, r, w, h, gridSize, maxDistSq);
+  
+    // Test the corners.
+    // placeCircle(0, 0, r, w, h, gridSize);
+    // placeCircle(4, 0, r, w, h, gridSize);
+    // placeCircle(0, 4, r, w, h, gridSize);
+    // placeCircle(4, 4, r, w, h, gridSize);
+
+    if (allTestsPassed) {
+        clear();
+        console.log("All tests passed! 🎉");
+    }
+}
+
+
+function test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
+    if (allTestsPassed) {
+        clear();
+        initOpenIndexes();
+        placeCircle(index, r, w, h, gridSize, maxDistSq);
+        drawIndexesText();
+        testNumber++;
+        assertTest(leftOpenIndexes, expectedLeftOpenIndexes, rightOpenIndexes, expectedRightOpenIndexes);
+    }
+}
+
+
+function drawIndexesText() {
+    for (let index = 0; index < gridSize; index++) {
+        drawCenteredText(index);
+    }
+}
+
+
+function drawCenteredText(index) {
+    const mx = index % w;
+    const my = Math.floor(index / w);
+    const widthMult = width / w;
+    const heightMult = height / h;
+    const x = (mx + 0.5) * widthMult;
+    const y = (my + 0.5) * heightMult;
+
+    push();
+    noStroke();
+    fill(255);
+    text(index, x, y);
+    pop();
+}
+
+
+function arraysEqual(a1,a2) {
+    /* WARNING: Arrays must not contain {objects} or behavior may be undefined. */
+    return JSON.stringify(a1) === JSON.stringify(a2);
+}
+
+
+function assertTest(leftOpenIndexes, expectedLeftOpenIndexes, rightOpenIndexes, expectedRightOpenIndexes) {
+    const leftEqual = arraysEqual(leftOpenIndexes, expectedLeftOpenIndexes);
+    const rightEqual = arraysEqual(rightOpenIndexes, expectedRightOpenIndexes);
+
+    if (!leftEqual || !rightEqual) {
+        allTestsPassed = false;
+
+        console.log(`Test ${testNumber} failed!`);
+
+        console.log(`\nexpected left: ${expectedLeftOpenIndexes}`);
+        console.log(`expected right: ${expectedRightOpenIndexes}`);
+        
+        console.log(`\nleft: ${leftOpenIndexes}`);
+        console.log(`right: ${rightOpenIndexes}`);
+    }
+}
+
+
+function drawCircles() {
+    const colors = [
+        [50, 50, 200],
+        [50, 200, 50],
+        [50, 200, 200],
+        [200, 50, 50],
+        [200, 50, 200],
+        [200, 200, 50],
+        [200, 200, 200],
+    ];
+    
+    let chosenColor;
+    let index;
+    
+    if (frameCount % 1 == 0) {
+        chosenColor = colors[colorIndex++ % colors.length];
+        fill(chosenColor);
+        stroke(chosenColor);
+    
+        for (let i = 0; i < placeSpeedMultiplier; i++) {
+            if (leftOpenIndexes.length != 0) {
+                index = getRandomOpenIndex();
+                placeCircle(index, r, w, h, gridSize, maxDistSq);
+                placed++;
+            }
+        }
+    }
+    
+    if (frameCount % 60 == 0) {
+        const open = leftOpenIndexes.length;
+        const placedPerSec = Math.floor(placed / ((performance.now() - prevTime) / 1000));
+        console.log(`open: ${open} (${open-prevOpen}), placed/second: ${placedPerSec} (${placedPerSec-prevPlacedPerSec})`);
+        prevOpen = open;
+        prevPlacedPerSec = placedPerSec;
+        placed = 0;
+        prevTime = performance.now();
+    }
 }
