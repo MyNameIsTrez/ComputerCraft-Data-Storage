@@ -37,7 +37,7 @@ let colorIndex = 0;
 function initOpenIndexes() {
     leftOpenIndexes = [];
     rightOpenIndexes = [];
-    
+
     leftOpenIndexes[0] = 0;
     rightOpenIndexes[0] = gridSize - 1;
 }
@@ -354,17 +354,39 @@ function runTests() {
     gridSize = w * h;
     maxDistSq = r ** 2;
 
-    test(0, [2, 6], [4, 24]);
-    test(9, [3, 6, 10, 15], [3, 7, 13, 24]);
-    // test(7, [2, 6], [4, 24]);
 
-    // placeCircle(7, r, w, h, gridSize, maxDistSq);
-  
-    // Test the corners.
-    // placeCircle(0, 0, r, w, h, gridSize);
-    // placeCircle(4, 0, r, w, h, gridSize);
-    // placeCircle(0, 4, r, w, h, gridSize);
-    // placeCircle(4, 4, r, w, h, gridSize);
+    // INDIVIDUAL //
+
+    // Corners.
+    testOne(0, [2, 6], [4, 24]);
+    testOne(4, [0, 5, 10], [2, 8, 24]);
+    testOne(20, [0, 16, 22], [14, 19, 24]);
+    testOne(24, [0, 20], [18, 22]);
+    
+    // Middle.
+    testOne(12, [0, 8, 14, 18], [6, 10, 16, 24]);
+
+
+    // COMBINED //
+    
+    clear();
+    initOpenIndexes();
+
+    // Corners.
+    
+    test(0, [2, 6], [4, 24]);
+    test(4, [2, 6, 10], [2, 8, 24]);
+    test(20, [2, 6, 10, 16, 22], [2, 8, 14, 19, 24]);
+    test(24, [2, 6, 10, 16, 22], [2, 8, 14, 18, 22]);
+
+    // Middle.
+    test(12, [2, 6, 8, 10, 14, 16, 18, 22], [2, 6, 8, 10, 14, 16, 18, 22]);
+
+
+    // TEMPLATE //
+
+    // test(, [], []);
+
 
     if (allTestsPassed) {
         clear();
@@ -373,10 +395,15 @@ function runTests() {
 }
 
 
+function testOne(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
+    clear();
+    initOpenIndexes();
+    test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes);
+}
+
+
 function test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
     if (allTestsPassed) {
-        clear();
-        initOpenIndexes();
         placeCircle(index, r, w, h, gridSize, maxDistSq);
         drawIndexesText();
         testNumber++;
