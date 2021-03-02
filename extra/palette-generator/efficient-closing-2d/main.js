@@ -101,11 +101,11 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 	for (let y = Math.max(0, my - r); y < Math.min(h, my + r + 1); y++) {
 		yDiffSq = (my - y) ** 2;
 
-		xClosedLeft = getXClosedLeft(mx, r, yDiffSq, rSq);
-		xClosedRight = getXClosedRight(h, mx, r, yDiffSq, rSq);
+		xClosedLeft = getXClosedLeft(rSq, yDiffSq, mx);
 		
-		// xClosedLeft = getXClosedLeft(rSq, yDiffSq, mx);
+		xClosedRight = getXClosedRight(h, mx, r, yDiffSq, rSq);
 		// xClosedRight = getXClosedRight(h, mx, r, yDiffSq, rSq);
+		
 
 		if (drawing) {
 			if (drawSquares) {
@@ -141,25 +141,14 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 
 
 function getFirstIClosedLeft(my, r, h, mx, rSq, w) {
-  if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
-    const firstY = Math.max(0, my - r);
-    const yDiffSq = (my - firstY) ** 2;
-    const xClosedLeft = getXClosedLeft(mx, r, yDiffSq, rSq);
-    const iClosedLeft = xToIndex(xClosedLeft, firstY, w);
-    console.log(iClosedLeft);
-    // console.log(y, yDiffSq, xClosedLeft, iClosedLeft);
-    return iClosedLeft;
-  }
+	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
+		const yOffsetSq = Math.min(my, r) ** 2;
+		const xClosedLeft = getXClosedLeft(rSq, yOffsetSq, mx);
+
+		const firstY = Math.max(0, my - r);
+		return xToIndex(xClosedLeft, firstY, w);
+	}
 }
-
-
-// function getFirstIClosedLeft(my, r, h, mx, rSq, w, yOffsetSq) {
-// 	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
-// 		const yOffsetSq = Math.min(my, r) ** 2;
-// 		const xClosedLeft = getXClosedLeft(rSq, yOffsetSq, mx);
-// 		return xToIndex(xClosedLeft, yOffsetSq, w);
-// 	}
-// }
 
 
 function getLastIClosedRight(my, r, h, mx, rSq, w) {
@@ -180,32 +169,17 @@ function xToIndex(x, y, w) {
 }
 
 
-function getXClosedLeft(mx, r, yDiffSq, rSq) {
-  let xLeft, distLeftSq;
-
-  xLeft = Math.max(0, mx - r);
-
-  // (x - mx)^2 + (y - my)^2 = r^2
-  // 
-  distLeftSq = (mx - xLeft) ** 2 + yDiffSq;
-
-  while (distLeftSq > rSq) { // TODO: May loop infinitely due to my - y?
-    xLeft++;
-    distLeftSq = (mx - xLeft) ** 2 + yDiffSq;
-  }
-
-  return xLeft;
+/*
+ * Circle: (xOffset - mx)^2 + (yOffset - my)^2 = r^2
+ * Unit circle: xOffset^2 + yOffset^2 = r^2
+ * xOffset^2 = rSq - yOffsetSq
+ * xOffset = sqrt(rSq - yOffsetSq)
+ */
+function getXClosedLeft(rSq, yOffsetSq, mx) {
+	const xOffset = Math.sqrt(rSq - yOffsetSq);
+	return Math.max(0, mx - xOffset);
 }
 
-
-// function getXClosedLeft(rSq, yOffsetSq, mx) {
-// 	// Circle: (xOffset - mx)^2 + (yOffset - my)^2 = r^2
-// 	// Unit circle: xOffset^2 + yOffset^2 = r^2
-// 	// xOffset^2 = rSq - yOffsetSq
-// 	// xOffset = sqrt(rSq - yOffsetSq)
-// 	const xOffset = Math.sqrt(rSq - yOffsetSq);
-// 	return Math.max(0, mx - xOffset);
-// }
 
 // function getXClosedRight(rSq, yOffsetSq, mx) {
 
@@ -229,12 +203,12 @@ function getXClosedRight(h, mx, r, yDiffSq, rSq) {
 
 
 /*
- ** Combines the ranges of open indexes.
- ** It does this by doing an AND operation on the ranges.
- ** [5, 7] means index 5, 6 and 7 are open.
- **
- ** [     [1,15]     ] + [ [5,6], [9,10] ] = [ [5,6], [9,10] ]
- ** [ [5, 6], [9,10] ] + [ [2,3], [6, 7] ] = [     [6,6]     ]
+ * Combines the ranges of open indexes.
+ * It does this by doing an AND operation on the ranges.
+ * [5, 7] means index 5, 6 and 7 are open.
+ *
+ * [     [1,15]     ] + [ [5,6], [9,10] ] = [ [5,6], [9,10] ]
+ * [ [5, 6], [9,10] ] + [ [2,3], [6, 7] ] = [     [6,6]     ]
  */
 function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridSize) {
 	let oldLeftOpenIndexes = [...leftOpenIndexes];
