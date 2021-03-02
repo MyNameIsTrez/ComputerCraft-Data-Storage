@@ -35,6 +35,8 @@ let prevTime = performance.now();
 
 let colorIndex = 0;
 
+let cellWidth, cellHeight;
+
 ////////////////////
 
 
@@ -94,7 +96,10 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 
 	let yOffsetSq;
 
-	if (getFirstIClosedLeft(my, r, h, mx, rSq, w) != 0) {
+	const yOffsetMaxSq = Math.min(my, r) ** 2;
+	const firstY = Math.max(0, my - r);
+
+	if (getFirstIClosedLeft(rSq, yOffsetMaxSq, mx, firstY, w) != 0) {
 		newLeftOpenIndexes.push(0);
 	}
 
@@ -108,9 +113,9 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 			if (drawSquares) {
 				drawRect(xClosedLeft, y, xClosedRight + 1, y + 1, w, h);
 			} else {
-				const mxScaled = mx * (width / w);
-				const myScaled = my * (height / h);
-				const rScaled = r * width / w;
+				const mxScaled = mx * cellWidth;
+				const myScaled = my * cellHeight;
+				const rScaled = r * cellWidth;
 				circle(mxScaled, myScaled, rScaled);
 			}
 		}
@@ -129,7 +134,7 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 		}
 	}
 
-	if (getLastIClosedRight(my, r, h, mx, rSq, w) != gridSize - 1) {
+	if (getLastIClosedRight(rSq, yOffsetMaxSq, mx, firstY, w) != gridSize - 1) {
 		newRightOpenIndexes.push(gridSize - 1);
 	}
 
@@ -137,32 +142,15 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 }
 
 
-function getFirstIClosedLeft(my, r, h, mx, rSq, w) {
-	// TODO: if-check necessary?
-	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
-		const yOffsetSq = Math.min(my, r) ** 2;
-		const xClosedLeft = getXClosedLeft(rSq, yOffsetSq, mx);
-
-		const firstY = Math.max(0, my - r);
-		return xToIndex(xClosedLeft, firstY, w);
-	}
+function getFirstIClosedLeft(rSq, yOffsetMaxSq, mx, firstY, w) {
+	const xClosedLeft = getXClosedLeft(rSq, yOffsetMaxSq, mx);
+	return xToIndex(xClosedLeft, firstY, w);
 }
 
 
-function getLastIClosedRight(my, r, h, mx, rSq, w) {
-	// TODO: if-check necessary?
-	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
-		const yOffsetSq = Math.min(my, r) ** 2;
-		const xClosedRight = getXClosedRight(rSq, yOffsetSq, mx);
-
-		const firstY = Math.max(0, my - r);
-		return xToIndex(xClosedRight, firstY, w);
-	}
-}
-
-
-function xToIndex(x, y, w) {
-	return x + y * w;
+function getLastIClosedRight(rSq, yOffsetMaxSq, mx, firstY, w) {
+	const xClosedRight = getXClosedRight(rSq, yOffsetMaxSq, mx);
+	return xToIndex(xClosedRight, firstY, w);
 }
 
 
@@ -180,7 +168,12 @@ function getXClosedLeft(rSq, yOffsetSq, mx) {
 
 function getXClosedRight(rSq, yOffsetSq, mx) {
 	const xOffset = Math.sqrt(rSq - yOffsetSq);
-	return Math.min(w - 1, mx + xOffset); // TODO: min(w - 1, ...) correct?
+	return Math.min(w - 1, mx + xOffset);
+}
+
+
+function xToIndex(x, y, w) {
+	return x + y * w;
 }
 
 
@@ -249,7 +242,6 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
 }
 
 
-
 function binarySearchClosest(newLeft, newRight, oldLeftArr, oldRightArr) {
 	const value = newLeft;
 
@@ -298,8 +290,8 @@ function initDrawGrid() {
 
 
 function drawRect(x1, y1, x2, y2, w, h) {
-	const widthMult = width / w;
-	const heightMult = height / h;
+	const widthMult = cellWidth;
+	const heightMult = cellHeight;
 	
 	const x1_ = x1 * widthMult;
 	const y1_ = y1 * heightMult;
@@ -321,6 +313,9 @@ function setup() {
 
 	gridSize = w * h;
 	rSq = r ** 2;
+	
+	cellWidth = width / w;
+	cellHeight = height / h;
 
 	///////////////////
 
