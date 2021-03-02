@@ -92,20 +92,17 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 	const mx = index % w;
 	const my = Math.floor(index / w);
 
-	let yDiffSq;
+	let yOffsetSq;
 
 	if (getFirstIClosedLeft(my, r, h, mx, rSq, w) != 0) {
 		newLeftOpenIndexes.push(0);
 	}
 
 	for (let y = Math.max(0, my - r); y < Math.min(h, my + r + 1); y++) {
-		yDiffSq = (my - y) ** 2;
+		yOffsetSq = (my - y) ** 2;
 
-		xClosedLeft = getXClosedLeft(rSq, yDiffSq, mx);
-		
-		xClosedRight = getXClosedRight(h, mx, r, yDiffSq, rSq);
-		// xClosedRight = getXClosedRight(h, mx, r, yDiffSq, rSq);
-		
+		xClosedLeft = getXClosedLeft(rSq, yOffsetSq, mx);
+		xClosedRight = getXClosedRight(rSq, yOffsetSq, mx);
 
 		if (drawing) {
 			if (drawSquares) {
@@ -141,6 +138,7 @@ function placeCircle(index, r, w, h, gridSize, rSq) {
 
 
 function getFirstIClosedLeft(my, r, h, mx, rSq, w) {
+	// TODO: if-check necessary?
 	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
 		const yOffsetSq = Math.min(my, r) ** 2;
 		const xClosedLeft = getXClosedLeft(rSq, yOffsetSq, mx);
@@ -152,14 +150,13 @@ function getFirstIClosedLeft(my, r, h, mx, rSq, w) {
 
 
 function getLastIClosedRight(my, r, h, mx, rSq, w) {
+	// TODO: if-check necessary?
 	if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
-		// const yOffsetSq = Math.min(h - my, r) ** 2;
+		const yOffsetSq = Math.min(my, r) ** 2;
+		const xClosedRight = getXClosedRight(rSq, yOffsetSq, mx);
 
-		const lastY = Math.min(h, my + r + 1) - 1;
-		const yOffsetSq = (my - lastY) ** 2;
-		const xClosedRight = getXClosedRight(h, mx, r, yOffsetSq, rSq);
-		const iClosedRight = xToIndex(xClosedRight, lastY, w);
-		return iClosedRight;
+		const firstY = Math.max(0, my - r);
+		return xToIndex(xClosedRight, firstY, w);
 	}
 }
 
@@ -173,7 +170,7 @@ function xToIndex(x, y, w) {
  * Circle: (xOffset - mx)^2 + (yOffset - my)^2 = r^2
  * Unit circle: xOffset^2 + yOffset^2 = r^2
  * xOffset^2 = rSq - yOffsetSq
- * xOffset = sqrt(rSq - yOffsetSq)
+ * xOffset = ± sqrt(rSq - yOffsetSq)
  */
 function getXClosedLeft(rSq, yOffsetSq, mx) {
 	const xOffset = Math.sqrt(rSq - yOffsetSq);
@@ -181,24 +178,9 @@ function getXClosedLeft(rSq, yOffsetSq, mx) {
 }
 
 
-// function getXClosedRight(rSq, yOffsetSq, mx) {
-
-// }
-
-
-function getXClosedRight(h, mx, r, yDiffSq, rSq) {
-	let xRight, distRightSq;
-
-	xRight = Math.min(h - 1, mx + r);
-
-	distRightSq = (xRight - mx) ** 2 + yDiffSq;
-
-	while (distRightSq > rSq) {
-		xRight--;
-		distRightSq = (xRight - mx) ** 2 + yDiffSq;
-	}
-
-	return xRight;
+function getXClosedRight(rSq, yOffsetSq, mx) {
+	const xOffset = Math.sqrt(rSq - yOffsetSq);
+	return Math.min(w - 1, mx + xOffset); // TODO: min(w - 1, ...) correct?
 }
 
 
