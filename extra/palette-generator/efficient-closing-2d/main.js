@@ -6,8 +6,6 @@ let w = 256; // Width of grid.
 let h = 256; // Height of grid.
 let r = 1; // Radius of circle, 0 means a single 1x1 cell.
 
-const runTestsBool = true;
-
 // NOT USER SETTINGS //
 
 let gridSize = w * h;
@@ -330,18 +328,14 @@ function drawRect(x1, y1, x2, y2, w, h) {
 
 
 function setup() {
-  initDrawGrid();
-
-  if (runTestsBool) {
+    initDrawGrid();
     runTests();
-  } else {
     initOpenIndexes();
-  }
 }
 
 
 function draw() {
-    if (!runTestsBool) {
+    if (allTestsPassed) {
         drawCircles();
     }
 }
@@ -358,13 +352,13 @@ function runTests() {
     // INDIVIDUAL //
 
     // Corners.
-    testOne(0, [2, 6], [4, 24]);
-    testOne(4, [0, 5, 10], [2, 8, 24]);
-    testOne(20, [0, 16, 22], [14, 19, 24]);
-    testOne(24, [0, 20], [18, 22]);
+    testOne(0, [2, 6], [4, 24]); // 1
+    testOne(4, [0, 5, 10], [2, 8, 24]); // 2
+    testOne(20, [0, 16, 22], [14, 19, 24]); // 3
+    testOne(24, [0, 20], [18, 22]); // 4
     
     // Middle.
-    testOne(12, [0, 8, 14, 18], [6, 10, 16, 24]);
+    testOne(12, [0, 8, 14, 18], [6, 10, 16, 24]); // 5
 
 
     // COMBINED //
@@ -374,13 +368,13 @@ function runTests() {
 
     // Corners.
     
-    test(0, [2, 6], [4, 24]);
-    test(4, [2, 6, 10], [2, 8, 24]);
-    test(20, [2, 6, 10, 16, 22], [2, 8, 14, 19, 24]);
-    test(24, [2, 6, 10, 16, 22], [2, 8, 14, 18, 22]);
+    test(0, [2, 6], [4, 24]); // 6
+    test(4, [2, 6, 10], [2, 8, 24]); // 7
+    test(20, [2, 6, 10, 16, 22], [2, 8, 14, 19, 24]); // 8
+    test(24, [2, 6, 10, 16, 22], [2, 8, 14, 18, 22]); // 9
 
     // Middle.
-    test(12, [2, 6, 8, 10, 14, 16, 18, 22], [2, 6, 8, 10, 14, 16, 18, 22]);
+    test(12, [2, 6, 8, 10, 14, 16, 18, 22], [2, 6, 8, 10, 14, 16, 18, 22]); // 10
 
 
     // TEMPLATE //
