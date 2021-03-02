@@ -48,39 +48,30 @@ function initOpenIndexes() {
 
 
 function getRandomOpenIndex() {
-  let nthOpenIndex = getRandomInt(getOpenIndexCount()) + 1; // TODO: Starts from 1, but may need to start from 0.
-  // console.log(`nthOpenIndex: ${nthOpenIndex}`);
+    let nthOpenIndex = getRandomInt(getOpenIndexCount()) + 1;
 
-  const leftOpenIndexesLength = leftOpenIndexes.length;
+    let openIndexesSeen = 0;
+    let difference, startOfLeft, offset;
 
-  let openIndexesSeen = 0;
-  let difference, closedIndex, openIndexesToSee;
-
-  for (let index = 0; index < leftOpenIndexesLength; index++) {
-    difference = rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
-    // console.log(`difference: ${difference}`);
-    // console.log(`openIndexesSeen + difference: ${openIndexesSeen + difference}`);
-
-    if (openIndexesSeen + difference >= nthOpenIndex) {
-      closedIndex = leftOpenIndexes[index] - 1;
-      openIndexesToSee = nthOpenIndex - openIndexesSeen;
-      return closedIndex + openIndexesToSee;
-    } else {
-      openIndexesSeen += difference;
+    for (let index = 0; index < leftOpenIndexes.length; index++) {
+        difference = rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
+        if (openIndexesSeen + difference >= nthOpenIndex) {
+            startOfLeft = leftOpenIndexes[index] - 1;
+            offset = nthOpenIndex - openIndexesSeen;
+            return startOfLeft + offset;
+        } else {
+            openIndexesSeen += difference;
+        }
     }
-  }
 }
 
 
-function getOpenIndexCount() { // TODO: Replace with code that continuously decrements openIndexCount instead for better time complexity.
+ // TODO: Replace with code that continuously decrements openIndexCount instead for better time complexity.
+function getOpenIndexCount() {
   let openIndexCount = 0;
-  let difference;
 
-  const leftOpenIndexesLength = leftOpenIndexes.length;
-
-  for (let index = 0; index < leftOpenIndexesLength; index++) {
-    difference = rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
-    openIndexCount += difference;
+  for (let index = 0; index < leftOpenIndexes.length; index++) {
+    openIndexCount += rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
   }
 
   return openIndexCount;
@@ -92,7 +83,6 @@ function getRandomInt(max) {
 }
 
 
-// function placeCircle(index, r, w, h, gridSize, maxDistSq) {
 function placeCircle(index, r, w, h, gridSize, maxDistSq) {
   let xClosedLeft, xClosedRight;
   let iClosedLeft, iClosedRight;
@@ -101,12 +91,10 @@ function placeCircle(index, r, w, h, gridSize, maxDistSq) {
   let newLeftOpenIndexes = [];
   let newRightOpenIndexes = [];
 
-  let mx, my;
+  const mx = index % w;
+  const my = Math.floor(index / w);
 
   let yDiffSq;
-
-  mx = index % w;
-  my = Math.floor(index / w);
 
   if (getFirstIClosedLeft(my, r, h, mx, maxDistSq, w) != 0) {
     newLeftOpenIndexes.push(0);
@@ -157,6 +145,7 @@ function getFirstIClosedLeft(my, r, h, mx, maxDistSq, w) {
     const yDiffSq = (my - firstY) ** 2;
     const xClosedLeft = getXClosedLeft(mx, r, yDiffSq, maxDistSq);
     const iClosedLeft = xToIndex(xClosedLeft, firstY, w);
+    console.log(iClosedLeft);
     // console.log(y, yDiffSq, xClosedLeft, iClosedLeft);
     return iClosedLeft;
   }
@@ -184,8 +173,10 @@ function getXClosedLeft(mx, r, yDiffSq, maxDistSq) {
 
   xLeft = Math.max(0, mx - r);
 
-  // TODO: Replace with smart math to instantly calculate xLeft and xRight that fit inside of the circle.
+  // (x - mx)^2 + (y - my)^2 = r^2
+  // 
   distLeftSq = (mx - xLeft) ** 2 + yDiffSq;
+
   while (distLeftSq > maxDistSq) { // TODO: May loop infinitely due to my - y?
     xLeft++;
     distLeftSq = (mx - xLeft) ** 2 + yDiffSq;

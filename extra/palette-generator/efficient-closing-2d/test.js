@@ -6,6 +6,9 @@ function runTests() {
     gridSize = w * h;
     maxDistSq = r ** 2;
 
+    
+    testOne(2, [], []);
+
 
     // INDIVIDUAL //
 
@@ -21,8 +24,10 @@ function runTests() {
 
     // COMBINED //
     
-    clear();
-    initOpenIndexes();
+    if (allTestsPassed) {
+        clear();
+        initOpenIndexes();
+    }
 
     // Corners.
     
@@ -48,9 +53,11 @@ function runTests() {
 
 
 function testOne(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
-    clear();
-    initOpenIndexes();
-    test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes);
+    if (allTestsPassed) {
+        clear();
+        initOpenIndexes();
+        test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes);
+    }
 }
 
 
