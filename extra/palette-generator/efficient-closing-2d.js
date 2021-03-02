@@ -1,14 +1,15 @@
-////////////////////
 // TODO: In C, these globals should be moved to main() and passed by address.
 
 // USER SETTINGS //
-const circleCount = 1;
+
 const w = 256; // Width of grid.
 const h = 256; // Height of grid.
 const r = 1; // Radius of circle, 0 means a single 1x1 cell.
 const placeSpeedMultiplier = 10; // 10
 const drawing = true;
-///////////////////
+
+// NOT USER SETTINGS //
+
 const gridSize = w * h;
 const maxDistSq = r ** 2;
 
@@ -21,6 +22,7 @@ let prevOpen = 0,
 let prevTime = performance.now();
 
 let colorIndex = 0;
+
 ////////////////////
 
 
@@ -97,7 +99,7 @@ function placeCircle(r, w, h, gridSize, maxDistSq) {
     newLeftOpenIndexes.push(0);
   }
 
-  for (let y = max(0, my - r); y < min(h, my + r + 1); y++) {
+  for (let y = Math.max(0, my - r); y < Math.min(h, my + r + 1); y++) {
     yDiffSq = (my - y) ** 2;
 
     xClosedLeft = getXClosedLeft(mx, r, yDiffSq, maxDistSq);
@@ -136,8 +138,8 @@ function placeCircle(r, w, h, gridSize, maxDistSq) {
 
 
 function getFirstIClosedLeft(my, r, h, mx, maxDistSq, w) {
-  if (max(0, my - r) < min(h, my + r + 1)) {
-    const firstY = max(0, my - r);
+  if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
+    const firstY = Math.max(0, my - r);
     const yDiffSq = (my - firstY) ** 2;
     const xClosedLeft = getXClosedLeft(mx, r, yDiffSq, maxDistSq);
     const iClosedLeft = xToIndex(xClosedLeft, firstY, w);
@@ -148,8 +150,8 @@ function getFirstIClosedLeft(my, r, h, mx, maxDistSq, w) {
 
 
 function getLastIClosedRight(my, r, h, mx, maxDistSq, w) {
-  if (max(0, my - r) < min(h, my + r + 1)) {
-    const lastY = min(h, my + r + 1) - 1;
+  if (Math.max(0, my - r) < Math.min(h, my + r + 1)) {
+    const lastY = Math.min(h, my + r + 1) - 1;
     const yDiffSq = (my - lastY) ** 2;
     const xClosedRight = getXClosedRight(h, mx, r, yDiffSq, maxDistSq);
     const iClosedRight = xToIndex(xClosedRight, lastY, w);
@@ -166,7 +168,7 @@ function xToIndex(x, y, w) {
 function getXClosedLeft(mx, r, yDiffSq, maxDistSq) {
   let xLeft, distLeftSq;
 
-  xLeft = max(0, mx - r);
+  xLeft = Math.max(0, mx - r);
 
   // TODO: Replace with smart math to instantly calculate xLeft and xRight that fit inside of the circle.
   distLeftSq = (mx - xLeft) ** 2 + yDiffSq;
@@ -182,7 +184,7 @@ function getXClosedLeft(mx, r, yDiffSq, maxDistSq) {
 function getXClosedRight(h, mx, r, yDiffSq, maxDistSq) {
   let xRight, distRightSq;
 
-  xRight = min(h - 1, mx + r);
+  xRight = Math.min(h - 1, mx + r);
 
   distRightSq = (xRight - mx) ** 2 + yDiffSq;
 
@@ -294,7 +296,7 @@ function binarySearchClosest(newLeft, newRight, oldLeftArr, oldRightArr) {
 
 
 function initDrawGrid() {
-  const size = min(innerWidth - 1, innerHeight - 1);
+  const size = Math.min(innerWidth - 1, innerHeight - 1);
   createCanvas(size, size);
 
   // rectMode(RADIUS);
