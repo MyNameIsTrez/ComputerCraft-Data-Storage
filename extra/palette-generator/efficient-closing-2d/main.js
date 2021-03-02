@@ -305,8 +305,8 @@ function setup() {
 
 	// USER SETTINGS //
 	
-	w = 256; // Width of grid.
-	h = 256; // Height of grid.
+	w = 512; // Width of grid.
+	h = 512; // Height of grid.
 	r = 1; // Radius of circle, 0 means a single 1x1 cell.
 
 	gridSize = w * h;
