@@ -10,6 +10,8 @@ let leftOpenIndexes, rightOpenIndexes;
 let testNumber = 0;
 let allTestsPassed = true;
 
+let openIndexCount;
+
 //// USED IN DRAWCIRCLES() ////
 
 const framesBetweenPlacement = 1; // 1 is max speed.
@@ -46,11 +48,13 @@ function initOpenIndexes() {
 
 	leftOpenIndexes[0] = 0;
 	rightOpenIndexes[0] = gridSize - 1;
+
+	openIndexCount = gridSize;
 }
 
 
 function getRandomOpenIndex() {
-	let nthOpenIndex = getRandomInt(getOpenIndexCount()) + 1;
+	let nthOpenIndex = getRandomInt(openIndexCount) + 1;
 
 	let openIndexesSeen = 0;
 	let difference, startOfLeft, offset;
@@ -68,18 +72,8 @@ function getRandomOpenIndex() {
 }
 
 
- // TODO: Replace with code that continuously decrements openIndexCount instead for better time complexity.
-function getOpenIndexCount() {
-	let openIndexCount = 0;
-	for (let index = 0; index < leftOpenIndexes.length; index++) {
-		openIndexCount += rightOpenIndexes[index] - leftOpenIndexes[index] + 1;
-	}
-	return openIndexCount;
-}
-
-
 function getRandomInt(max) {
-	return Math.floor(Math.random() * Math.floor(max));
+	return Math.floor(Math.random() * max);
 }
 
 
@@ -201,6 +195,8 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
 	let combinedLeftOpenIndexes = []; // Max indexes can be calculated and used so this array can be recycled in C.
 	let combinedRightOpenIndexes = [];
 
+	openIndexCount = 0;
+
 	// TODO: Look into ropes (binary tree structure) as faster algorithm.
 
 	for (let newIndex = 0; newIndex < newOpenIndexesLength; newIndex++) {
@@ -223,6 +219,8 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
 			if (end >= start) {
 				combinedLeftOpenIndexes.push(start);
 				combinedRightOpenIndexes.push(end);
+
+				openIndexCount += end - start + 1;
 			}
 
 			if (newIndex + 1 <= newOpenIndexesLength && newLeftIndexNext <= oldRightOpenIndexes[oldIndex]) {
