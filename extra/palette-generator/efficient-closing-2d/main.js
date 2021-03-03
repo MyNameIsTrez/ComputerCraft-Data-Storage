@@ -200,6 +200,7 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
 	// TODO: Look into ropes (binary tree structure) as faster algorithm.
 
 	for (let newIndex = 0; newIndex < newOpenIndexesLength; newIndex++) {
+		// binarySearchClosest doesn't show up in Chrome performance profiling as it's O(log n)
 		oldIndex = binarySearchClosest(newLeftOpenIndexes[newIndex], newRightOpenIndexes[newIndex], oldLeftOpenIndexes, oldRightOpenIndexes);
 
 		// console.log(`newLeftOpenIndexes[newIndex]: ${newLeftOpenIndexes[newIndex]}, newRightOpenIndexes[newIndex]: ${newRightOpenIndexes[newIndex]}, oldLeftOpenIndexes: ${oldLeftOpenIndexes}, oldRightOpenIndexes: ${oldRightOpenIndexes}`);
@@ -212,6 +213,7 @@ function combineOpenIndexes(newLeftOpenIndexes, newRightOpenIndexes, w, h, gridS
 
 		newLeftIndexNext = newLeftOpenIndexes[newIndex + 1];
 
+        // Repeated thousands of times per single loop.
 		while (oldIndex < oldOpenIndexesLength) {
 			start = Math.max(oldLeftOpenIndexes[oldIndex], newLeftIndex);
 			end = Math.min(oldRightOpenIndexes[oldIndex], newRightIndex);
