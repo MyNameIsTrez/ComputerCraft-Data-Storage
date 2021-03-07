@@ -112,7 +112,7 @@ function assertTest(leftOpenArr, expectedLeftOpenArr, rightOpenArr, expectedRigh
 		console.log(`\nexpected left: ${expectedLeftOpenArr}`);
 		console.log(`expected right: ${expectedRightOpenArr}`);
 		
-		console.log(`\nleft: ${leftOpenArr}`);
-		console.log(`right: ${rightOpenArr}`);
+		console.log("\nleft:", leftOpenArr);
+		console.log("right:", rightOpenArr);
 	}
 }

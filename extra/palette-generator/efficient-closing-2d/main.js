@@ -200,157 +200,230 @@ function combineOpenArrs(newLeftOpenArr, newRightOpenArr, w, h, gridSize) {
 
 	openCount = 0;
 
-	// for (let newIndex = 0; newIndex < newOpenArrLength; newIndex++) {
-	// 	newLeft = newLeftOpenArr[newIndex];
-	// 	newRight = newRightOpenArr[newIndex];
-
-	// 	oldIndexLeft = binarySearchClosestLeftIndex(newLeft, oldLeftOpenArr);
-	// 	oldLeft = oldLeftOpenArr[oldIndexLeft];
-
-	// 	oldIndexRight = binarySearchClosestRightIndex(newRight, oldRightOpenArr);
-	// 	oldRight = oldRightOpenArr[oldIndexRight];
-
-
-	// }
-
-
-
-
-
 	for (let newIndex = 0; newIndex < newOpenArrLength; newIndex++) {
-	    // console.log(newIndex, oldLeftOpenArr, oldRightOpenArr, newLeftOpenArr, newRightOpenArr)
-
-		oldIndexLeft = binarySearchClosestLeftIndex(newLeftOpenArr[newIndex], oldLeftOpenArr);
-
-		if (oldIndexLeft == -1) { // Should never be reached!
-	        console.log("oldIndexLeft == -1!!");
-	        continue;
-	    }
-
 		newLeft = newLeftOpenArr[newIndex];
 		newRight = newRightOpenArr[newIndex];
 
-		newLeftNext = newLeftOpenArr[newIndex + 1];
+		// oldIndexLeft = binarySearchClosestLeftIndex(newLeft, oldLeftOpenArr);
+		oldIndexLeft = binarySearchClosestRightIndex(newLeft, oldRightOpenArr);
+		oldLeft = oldLeftOpenArr[oldIndexLeft];
 
-	    // console.log(newLeftNext); // TODO: Prints undefined!!
+		// oldIndexRight = binarySearchClosestRightIndex(newRight, oldRightOpenArr);
+		oldIndexRight = binarySearchClosestLeftIndex(newRight, oldLeftOpenArr);
+		oldRight = oldRightOpenArr[oldIndexRight];
 
-	    // TODO: Check if this is still repeated thousands of times per loop.
-		while (oldIndexLeft < oldOpenArrLength) {
-			oldLeft = oldLeftOpenArr[oldIndexLeft];
-			start = Math.max(oldLeft, newLeft);
-			
-			oldRight = oldRightOpenArr[oldIndexLeft];
+		start = Math.max(oldLeft, newLeft);
+
+		console.log(`oldLeftOpenArr: ${oldLeftOpenArr}`);
+		console.log(`oldRightOpenArr: ${oldRightOpenArr}`);
+		console.log(`oldIndexLeft: ${oldIndexLeft}`);
+		console.log(`oldLeft: ${oldLeft}`);
+		console.log(`oldRight: ${oldRight}\n\n`);
+		console.log(`newLeftOpenArr: ${newLeftOpenArr}`);
+		console.log(`newRightOpenArr: ${newRightOpenArr}`);
+		console.log(`newIndex: ${newIndex}`);
+		console.log(`newLeft: ${newLeft}`);
+		console.log(`newRight: ${newRight}\n\n`);
+		console.log(`start: ${start}`);
+
+		if (oldIndexRight - oldIndexLeft == 0) {
+			combinedLeftOpenArr.push(start);
+
 			end = Math.min(oldRight, newRight);
+			console.log(`end: ${end}`);
+			combinedRightOpenArr.push(end);
+			
+			openCount += end - start + 1;
+		} else {
+			combinedLeftOpenArr.push(start);
 
-			if (end >= start) {
+			oldIndexRight = oldIndexLeft;
+			oldRight = oldRightOpenArr[oldIndexRight];
+
+			end = Math.min(oldRight, newRight);
+			console.log(`end: ${end}`);
+			combinedRightOpenArr.push(end);
+
+			console.log(`\noldIndexRight 2: ${oldIndexRight}`);
+			console.log(`oldRight 2: ${oldRight}`);
+
+			openCount += end - start + 1;
+
+			for (let i = oldIndexLeft + 1; i <= oldIndexRight; i++) {
+				oldLeft = oldLeftOpenArr[i];
+				oldRight = oldRightOpenArr[i];
+
+				start = Math.max(oldLeft, newLeft);
+				end = Math.min(oldRight, newRight);
+				
 				combinedLeftOpenArr.push(start);
 				combinedRightOpenArr.push(end);
 
 				openCount += end - start + 1;
 			}
-
-			// if (newIndex + 1 <= newOpenArrLength && newLeftNext <= oldRight) {
-			if (newIndex + 1 < newOpenArrLength && newLeftNext <= oldRight) {
-				// newIndex++;
-				break;
-			} else {
-				oldIndexLeft++;
-			}
 		}
+
+		console.log("\n".repeat(3));
 	}
+
+	console.log("\n".repeat(7));
+
+
+
+
+	// let newIndex = 0;
+
+	// while (newIndex < newOpenArrLength) {
+	// 	oldIndexLeft = binarySearchClosestLeftIndex(newLeftOpenArr[newIndex], oldLeftOpenArr);
+
+	// 	if (oldIndexLeft == -1) { // Should never be reached!
+	//         console.log("oldIndexLeft == -1!!");
+	//         continue;
+	//     }
+
+	// 	newLeft = newLeftOpenArr[newIndex];
+	// 	newRight = newRightOpenArr[newIndex];
+
+	// 	if (newIndex + 1 < newOpenArrLength) {
+	// 		newLeftNext = newLeftOpenArr[newIndex + 1];
+	// 	}
+
+	//     // console.log(newLeftNext); // TODO: Prints undefined!!
+
+	//     // TODO: Check if this is still repeated thousands of times per loop.
+	// 	while (oldIndexLeft < oldOpenArrLength) {
+	// 		oldLeft = oldLeftOpenArr[oldIndexLeft];
+	// 		start = Math.max(oldLeft, newLeft);
+			
+	// 		oldRight = oldRightOpenArr[oldIndexLeft];
+	// 		end = Math.min(oldRight, newRight);
+
+	// 		console.log(`oldLeftOpenArr: ${oldLeftOpenArr}`);
+	// 		console.log(`oldRightOpenArr: ${oldRightOpenArr}`);
+	// 		console.log(`oldIndexLeft: ${oldIndexLeft}`);
+	// 		console.log(`oldLeft: ${oldLeft}`);
+	// 		console.log(`oldRight: ${oldRight}\n\n`);
+	// 		console.log(`newLeftOpenArr: ${newLeftOpenArr}`);
+	// 		console.log(`newRightOpenArr: ${newRightOpenArr}`);
+	// 		console.log(`newIndex: ${newIndex}`);
+	// 		console.log(`newLeft: ${newLeft}`);
+	// 		console.log(`newRight: ${newRight}\n\n`);
+	// 		console.log(`start: ${start}`);
+	// 		console.log(`end: ${end}`);
+	// 		console.log(`end >= start: ${end >= start}\n\n`);
+	// 		console.log(`newIndex + 1: ${newIndex + 1}`);
+	// 		console.log(`newOpenArrLength: ${newOpenArrLength}`);
+	// 		console.log(`newIndex + 1 < newOpenArrLength: ${newIndex + 1 < newOpenArrLength}`);
+	// 		console.log(`newLeftNext: ${newLeftNext}`);
+	// 		console.log(`oldRight: ${oldRight}`);
+	// 		console.log(`newLeftNext <= oldRight: ${newLeftNext <= oldRight}\n\n`);
+
+	// 		// if (!(end >= start)) {
+	// 		// 	console.log(start, end);
+	// 		// }
+
+	// 		// if (end >= start) {
+	// 		combinedLeftOpenArr.push(start);
+	// 		combinedRightOpenArr.push(end);
+
+	// 		console.log(`combinedLeftOpenArr: ${combinedLeftOpenArr}`);
+	// 		console.log(`combinedRightOpenArr: ${combinedRightOpenArr}\n\n\n\n`);
+
+	// 		openCount += end - start + 1;
+	// 		// }
+
+	// 		// if (newIndex + 1 <= newOpenArrLength && newLeftNext <= oldRight) {
+	// 		if (newIndex + 1 < newOpenArrLength && newLeftNext <= oldRight) {
+	// 			break;
+	// 		} else {
+	// 			oldIndexLeft++;
+	// 		}
+	// 	}
+		
+	// 	newIndex++;
+	// }
+
+	// console.log("\n".repeat(5));
 
 	leftOpenArr = [...combinedLeftOpenArr];
 	rightOpenArr = [...combinedRightOpenArr];
 }
 
 
+// function binarySearchClosestLeftIndex(searched, arr) {
+// 	// TODO: In C this function could just use ints here instead of lets so the Math.floor below can be removed.
+// 	let low = 0;
+// 	let high = arr.length - 1;
+// 	let mid;
+
+// 	while (low <= high) {
+// 		mid = Math.floor((high + low) / 2);
+// 		// console.log(`low: ${low}, mid: ${mid}, high: ${high}, searched: ${searched}, arr[mid]: ${arr[mid]}, searched < arr[mid]: ${searched < arr[mid]}`);
+
+// 		if (searched < arr[mid]) {
+// 			high = mid - 1;
+// 		} else if (searched > arr[mid]) {
+// 			low = mid + 1;
+// 		} else {
+// 			// console.log("return 1");
+// 			return mid;
+// 		}
+// 	}
+// 	// console.log("return 2");
+// 	// console.log(`low: ${low}, high: ${high}`);
+// 	return Math.max(0, high); // This probably won't work in all cases.
+// 	// return (arr[low] - searched) < (searched - arr[high]) ? low : high;
+// }
+
+
 function binarySearchClosestLeftIndex(searched, arr) {
-	// TODO: In C this function could just use ints here instead of lets so the Math.floor below can be removed.
+	if (searched < arr[0]) return 0;
+	if (searched > arr[arr.length - 1]) return arr.length - 1;
+
+	// TODO: In C this function could just use ints here instead of lets so the Math.floor() below can be removed.
 	let low = 0;
 	let high = arr.length - 1;
 	let mid;
 
 	while (low <= high) {
 		mid = Math.floor((high + low) / 2);
-		// console.log(`low: ${low}, mid: ${mid}, high: ${high}, searched: ${searched}, arr[mid]: ${arr[mid]}, searched < arr[mid]: ${searched < arr[mid]}`);
 
 		if (searched < arr[mid]) {
 			high = mid - 1;
 		} else if (searched > arr[mid]) {
 			low = mid + 1;
 		} else {
-			// console.log("return 1");
 			return mid;
 		}
 	}
-	// console.log("return 2");
-	// console.log(`low: ${low}, high: ${high}`);
-	return Math.max(0, high); // This probably won't work in all cases.
-	// return (arr[low] - searched) < (searched - arr[high]) ? low : high;
+
+	return high;
 }
 
 
-// function binarySearchClosestLeftIndex(searched, arr) {
-// 	if (searched < arr[0]) {
-// 	  return arr[0];
-// 	}
-// 	if (searched > arr[arr.length - 1]) {
-// 	  return arr[arr.length - 1];
-// 	}
+function binarySearchClosestRightIndex(searched, arr) {
+	if (searched < arr[0]) return 0;
+	if (searched > arr[arr.length - 1]) return arr.length - 1;
 
-// 	// TODO: In C this function could just use ints here instead of lets so the Math.floor() below can be removed.
-// 	let low = 0;
-// 	let high = arr.length - 1;
-// 	let mid;
+	// TODO: In C this function could just use ints here instead of lets so the Math.floor() below can be removed.
+	let low = 0;
+	let high = arr.length - 1;
+	let mid;
 
-// 	// console.log("foo")
-// 	while (low <= high) {
-// 		mid = Math.floor((high + low) / 2);
-// 		// console.log(`low: ${low}, mid: ${mid}, high: ${high}, searched: ${searched}, arr[mid]: ${arr[mid]}, searched < arr[mid]: ${searched < arr[mid]}, searched > arr[mid]: ${searched > arr[mid]}, arr: ${arr}`);
+	while (low <= high) {
+		mid = Math.floor((high + low) / 2);
 
-// 		if (searched < arr[mid]) {
-// 			high = mid - 1;
-// 		} else if (searched > arr[mid]) {
-// 			low = mid + 1;
-// 		} else {
-// 			// console.log("bar")
-// 			return mid;
-// 		}
-// 	}
+		if (searched < arr[mid]) {
+			high = mid - 1;
+		} else if (searched > arr[mid]) {
+			low = mid + 1;
+		} else {
+			return mid;
+		}
+	}
 
-// 	// console.log("baz");
-// 	// console.log((arr[low] - searched) < (searched - arr[high]) ? low : high);
-// 	return (arr[low] - searched) < (searched - arr[high]) ? low : high;
-// }
-
-// function binarySearchClosestRight(searched, arr) {
-// 	if (searched < arr[0]) {
-// 		return arr[0];
-// 	}
-// 	if (searched > arr[arr.length - 1]) {
-// 		return arr[arr.length - 1];
-// 	}
-  
-// 	// TODO: In C this function could just use ints here instead of lets so the Math.floor() below can be removed.
-// 	let low = 0;
-// 	let high = arr.length - 1;
-// 	let mid;
-  
-// 	while (low <= high) {
-// 		mid = Math.floor((high + low) / 2);
-// 		// console.log(`low: ${low}, mid: ${mid}, high: ${high}, searched: ${searched}, arr[mid]: ${arr[mid]}, searched < arr[mid]: ${searched < arr[mid]}, searched > arr[mid]: ${searched > arr[mid]}, arr: ${arr}`);
-	
-// 		if (searched < arr[mid]) {
-// 			high = mid - 1;
-// 		} else if (searched > arr[mid]) {
-// 			low = mid + 1;
-// 		} else {
-// 			return arr[mid];
-// 		}
-// 	}
-  
-// 	return (arr[low] - searched) < (searched - arr[high]) ? arr[high] : arr[low];
-// }
+	return low;
+}
 
 
 function initDrawGrid() {
