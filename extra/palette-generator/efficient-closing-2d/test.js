@@ -26,7 +26,7 @@ function runTests() {
 	
 	if (allTestsPassed) {
 		clear();
-		initOpenIndexes();
+		initOpenArr();
 	}
 
 	// Corners.
@@ -52,21 +52,21 @@ function runTests() {
 }
 
 
-function testOne(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
+function testOne(index, expectedLeftOpenArr, expectedRightOpenArr) {
 	if (allTestsPassed) {
 		clear();
-		initOpenIndexes();
-		test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes);
+		initOpenArr();
+		test(index, expectedLeftOpenArr, expectedRightOpenArr);
 	}
 }
 
 
-function test(index, expectedLeftOpenIndexes, expectedRightOpenIndexes) {
+function test(index, expectedLeftOpenArr, expectedRightOpenArr) {
 	if (allTestsPassed) {
 		placeCircle(index, r, w, h, gridSize, rSq);
 		drawIndexesText();
 		testNumber++;
-		assertTest(leftOpenIndexes, expectedLeftOpenIndexes, rightOpenIndexes, expectedRightOpenIndexes);
+		assertTest(leftOpenArr, expectedLeftOpenArr, rightOpenArr, expectedRightOpenArr);
 	}
 }
 
@@ -100,19 +100,19 @@ function arraysEqual(a1,a2) {
 }
 
 
-function assertTest(leftOpenIndexes, expectedLeftOpenIndexes, rightOpenIndexes, expectedRightOpenIndexes) {
-	const leftEqual = arraysEqual(leftOpenIndexes, expectedLeftOpenIndexes);
-	const rightEqual = arraysEqual(rightOpenIndexes, expectedRightOpenIndexes);
+function assertTest(leftOpenArr, expectedLeftOpenArr, rightOpenArr, expectedRightOpenArr) {
+	const leftEqual = arraysEqual(leftOpenArr, expectedLeftOpenArr);
+	const rightEqual = arraysEqual(rightOpenArr, expectedRightOpenArr);
 
 	if (!leftEqual || !rightEqual) {
 		allTestsPassed = false;
 
 		console.log(`Test ${testNumber} failed!`);
 
-		console.log(`\nexpected left: ${expectedLeftOpenIndexes}`);
-		console.log(`expected right: ${expectedRightOpenIndexes}`);
+		console.log(`\nexpected left: ${expectedLeftOpenArr}`);
+		console.log(`expected right: ${expectedRightOpenArr}`);
 		
-		console.log(`\nleft: ${leftOpenIndexes}`);
-		console.log(`right: ${rightOpenIndexes}`);
+		console.log(`\nleft: ${leftOpenArr}`);
+		console.log(`right: ${rightOpenArr}`);
 	}
 }
