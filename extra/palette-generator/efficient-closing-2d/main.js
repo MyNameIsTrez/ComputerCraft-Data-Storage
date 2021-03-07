@@ -186,9 +186,9 @@ function combineOpenArrs(newLeftOpenArr, newRightOpenArr, w, h, gridSize) {
 	const oldOpenArrLength = oldLeftOpenArr.length;
 	const newOpenArrLength = newLeftOpenArr.length;
 
-	let oldIndexLeft, oldIndexRight;
+	let oldIndexLeft, oldIndexRight, oldIndexRight2;
 
-	let oldLeft, oldRight;
+	let oldLeft, oldRight, oldRight2;
 	let newLeft, newRight;
 
 	let newLeftNext;
@@ -198,9 +198,15 @@ function combineOpenArrs(newLeftOpenArr, newRightOpenArr, w, h, gridSize) {
 	let combinedLeftOpenArr = []; // TODO: This array can be recycled in C.
 	let combinedRightOpenArr = [];
 
+	let newIndex = 0
+	
 	openCount = 0;
 
-	for (let newIndex = 0; newIndex < newOpenArrLength; newIndex++) {
+	let temp1 = 0, temp2 = 0;
+
+	// for (let newIndex = 0; newIndex < newOpenArrLength; newIndex++) {
+	while (newIndex < newOpenArrLength) {
+		temp1++;
 		newLeft = newLeftOpenArr[newIndex];
 		newRight = newRightOpenArr[newIndex];
 
@@ -214,47 +220,58 @@ function combineOpenArrs(newLeftOpenArr, newRightOpenArr, w, h, gridSize) {
 
 		start = Math.max(oldLeft, newLeft);
 
-		console.log(`oldLeftOpenArr: ${oldLeftOpenArr}`);
-		console.log(`oldRightOpenArr: ${oldRightOpenArr}`);
-		console.log(`oldIndexLeft: ${oldIndexLeft}`);
-		console.log(`oldLeft: ${oldLeft}`);
-		console.log(`oldRight: ${oldRight}\n\n`);
-		console.log(`newLeftOpenArr: ${newLeftOpenArr}`);
-		console.log(`newRightOpenArr: ${newRightOpenArr}`);
-		console.log(`newIndex: ${newIndex}`);
-		console.log(`newLeft: ${newLeft}`);
-		console.log(`newRight: ${newRight}\n\n`);
-		console.log(`start: ${start}`);
+		// console.log(`newLeftOpenArr: ${newLeftOpenArr}`);
+		// console.log(`newRightOpenArr: ${newRightOpenArr}\n\n`);
+		// console.log(`newIndex: ${newIndex}`);
+		// console.log(`newLeft: ${newLeft}`);
+		// console.log(`newRight: ${newRight}\n\n`);
+
+		// console.log(`oldLeftOpenArr: ${oldLeftOpenArr}`);
+		// console.log(`oldRightOpenArr: ${oldRightOpenArr}\n\n`);
+		
+		// console.log(`oldIndexLeft: ${oldIndexLeft}`);
+		// console.log(`oldLeft: ${oldLeft}\n\n`);
+
+		// console.log(`oldIndexRight: ${oldIndexRight}`);
+		// console.log(`oldRight: ${oldRight}\n\n`);
+
+		// console.log(`start: ${start}`);
 
 		if (oldIndexRight - oldIndexLeft == 0) {
 			combinedLeftOpenArr.push(start);
 
 			end = Math.min(oldRight, newRight);
-			console.log(`end: ${end}`);
+			// console.log(`end: ${end}`);
 			combinedRightOpenArr.push(end);
 			
 			openCount += end - start + 1;
 		} else {
+			// console.log("fooooooooooooooooooooooo");
 			combinedLeftOpenArr.push(start);
 
-			oldIndexRight = oldIndexLeft;
-			oldRight = oldRightOpenArr[oldIndexRight];
+			oldIndexRight2 = oldIndexLeft;
+			oldRight2 = oldRightOpenArr[oldIndexRight2];
 
-			end = Math.min(oldRight, newRight);
-			console.log(`end: ${end}`);
+			end = Math.min(oldRight2, newRight);
+			// console.log(`end: ${end}`);
 			combinedRightOpenArr.push(end);
 
-			console.log(`\noldIndexRight 2: ${oldIndexRight}`);
-			console.log(`oldRight 2: ${oldRight}`);
+			// console.log(`\noldIndexRight 2: ${oldIndexRight}`);
+			// console.log(`oldRight 2: ${oldRight}`);
 
 			openCount += end - start + 1;
 
 			for (let i = oldIndexLeft + 1; i <= oldIndexRight; i++) {
+				temp2++;
+				
 				oldLeft = oldLeftOpenArr[i];
 				oldRight = oldRightOpenArr[i];
 
 				start = Math.max(oldLeft, newLeft);
 				end = Math.min(oldRight, newRight);
+
+				// console.log(`\nstart 2: ${start}`);
+				// console.log(`end 2: ${end}`);
 				
 				combinedLeftOpenArr.push(start);
 				combinedRightOpenArr.push(end);
@@ -263,11 +280,15 @@ function combineOpenArrs(newLeftOpenArr, newRightOpenArr, w, h, gridSize) {
 			}
 		}
 
-		console.log("\n".repeat(3));
+		newIndex++;
+
+		// console.log("\n".repeat(3));
 	}
 
-	console.log("\n".repeat(7));
+	// console.log("\n".repeat(7));
 
+	// console.log(`temp1: ${temp1}`);
+	console.log(`temp2: ${temp2}`);
 
 
 
